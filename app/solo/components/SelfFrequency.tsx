@@ -70,7 +70,7 @@ export default function SelfFrequency({ onContinue }: ClassifcationTaskProps) {
 
   return (
     <div className="min-h-full w-full flex flex-col items-center justify-center bg-black">
-      <div className="bg-black border p-8 text-center max-w-7xl mx-auto flex-1 flex flex-col justify-center">
+      <div className="bg-black p-8 text-center max-w-7xl mx-auto flex-1 flex flex-col justify-center">
         <MatrixSlider
           leftLabel="Never"
           rightLabel="All the time"

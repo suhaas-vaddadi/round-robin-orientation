@@ -21,8 +21,11 @@ function ParticipantForm({
     <div className="w-full flex flex-col items-center justify-center bg-black cursor-auto overflow-hidden h-screen">
       <div className="text-center max-w-2xl mx-auto px-8">
         <h1 className="text-white text-4xl font-bold mb-8">
-          {`Please Enter the Particpant's Information`}
+          {`Please Enter Your Information`}
         </h1>
+        <p className="text-white text-lg mb-8">
+          {`You should find the information for your session in the email you received.`}
+        </p>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>

@@ -20,7 +20,7 @@ function MatrixQuestion({
   };
 
   return (
-    <div className={`bg-black border p-6 ${className}`}>
+    <div className={`bg-black p-6 ${className}`}>
       {title && (
         <h2 className="text-white text-2xl font-bold mb-6 text-center">
           {title}
