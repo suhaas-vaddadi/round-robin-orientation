@@ -9,11 +9,10 @@ import Expressivity from "./components/Expressivity";
 import StudyFeedback from "./components/StudyFeedback";
 import Autism from "./components/Autism";
 import { emotionTransitions } from "./components/types";
-import { ClassificationTaskMainProps, TransitionRating, StepData, PartnerHistoryData, SelfFrequencyData, MatrixData, ExperienceData, StudyFeedbackData, PartnerSlidersData } from "./components/types";
+import { ClassificationTaskMainProps, TransitionRating, StepData, PartnerHistoryData, SelfFrequencyData, MatrixData, StudyFeedbackData, PartnerSlidersData } from "./components/types";
 
 function ClassificationTaskMain({
   formData: _formData,
-  csvFilePath,
   onComplete,
 }: ClassificationTaskMainProps) {
   const trail_number = useRef<number>(1);
@@ -65,99 +64,43 @@ function ClassificationTaskMain({
   const [currentStep, setCurrentStep] = useState<string>("instructions");
   const [instructionIndex, setInstructionIndex] = useState<number>(0);
   const [currentPersonIndex, setCurrentPersonIndex] = useState<number>(0);
-  const [shuffledPeople, setShuffledPeople] = useState<string[]>([]);
   const [allRatings, setAllRatings] = useState<TransitionRating[]>([]);
   const [showTransition, setShowTransition] = useState<boolean>(false);
-  const [formOrder, setFormOrder] = useState<string[]>([]);
   const [currentFormIndex, setCurrentFormIndex] = useState<number>(0);
 
-  const ratingPeople = [
+    const ratingPeople = [
     "yourself",
     "an average UW-Madison student",
   ];
+    const [shuffledPeople] = useState<string[]>(() =>
+    [...ratingPeople].sort(() => Math.random() - 0.5),
+  );
+  const [blockRandomized] = useState<string[]>(() =>
+    ["loneliness", "socialConnectedness", "expressivity"].sort(
+      () => Math.random() - 0.5,
+    ),
+  );
 
-  useEffect(() => {
-    const shuffled = [...ratingPeople].sort(() => Math.random() - 0.5);
-    const blockRandomized = [
-      "loneliness",
-      "socialConnectedness",
-      "expressivity",
-    ].sort(() => Math.random() - 0.5);
+  const formOrder = [
+    "emotionTransitions",
+    "selfFrequency",
+    "experience",
+    "partnerSliders",
+    blockRandomized[0],
+    blockRandomized[1],
+    blockRandomized[2],
+    "autism",
+    "partnerHistory",
+    "demographics",
+    "studyFeedback",
+  ];
 
-    const forms = [
-      "emotionTransitions",
-      "selfFrequency",
-      blockRandomized[0],
-      blockRandomized[1],
-      blockRandomized[2],
-      "autism",
-    ];
-    setShuffledPeople(shuffled);
-    setFormOrder(forms);
-  }, [csvFilePath, _formData]);
-
-
-  useEffect(() => {
-    const handleKeyPress = async (_event: KeyboardEvent) => {
-      if (currentStep === "instructions") {
-        if (instructionIndex + 1 >= 10) {
-          handleStepComplete();
-          return;
-        }
-        setInstructionIndex((i) => i + 1);
-        return;
-      }
-
-      if (currentStep === "ratings" && showTransition && _event.key === " ") {
-        _event.preventDefault();
-        handleTransitionKeyPress();
-        return;
-      }
-
-      if (currentStep === "completed") {
-        onComplete?.();
-        return;
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [currentStep, instructionIndex, showTransition, onComplete]);
-
-  const handleTransitionSubmit = async (
-    initial: string,
-    final: string,
-    rating: number,
-  ) => {
-    const ratingPerson = shuffledPeople[currentPersonIndex];
-    await writeCSVRow(
-      "emotion_transitions",
-      `${initial}_to_${final}`,
-      initial,
-      final,
-      ratingPerson,
-      rating,
-    );
-  };
-
-  const handleAllTransitionsComplete = async (ratings: TransitionRating[]) => {
-    setAllRatings((prev) => [...prev, ...ratings]);
-
-    if (currentPersonIndex + 1 < shuffledPeople.length) {
-      setShowTransition(true);
-    } else {
-      setCurrentFormIndex(1);
-      setCurrentStep("selfFrequency");
-      console.log("All ratings completed:", allRatings.concat(ratings));
-    }
-  };
-
-  const handleTransitionKeyPress = () => {
+    const handleTransitionKeyPress = () => {
     setShowTransition(false);
     setCurrentPersonIndex((prev) => prev + 1);
   };
 
-  const handleStepComplete = async (stepData?: StepData) => {
+    const handleStepComplete = async (stepData?: StepData) => {
     switch (currentStep) {
       case "instructions":
         setCurrentStep("ratings");
@@ -371,6 +314,66 @@ function ClassificationTaskMain({
         break;
     }
   };
+
+
+  useEffect(() => {
+    const handleKeyPress = async (_event: KeyboardEvent) => {
+      if (currentStep === "instructions") {
+        if (instructionIndex + 1 >= 10) {
+          handleStepComplete();
+          return;
+        }
+        setInstructionIndex((i) => i + 1);
+        return;
+      }
+
+      if (currentStep === "ratings" && showTransition && _event.key === " ") {
+        _event.preventDefault();
+        handleTransitionKeyPress();
+        return;
+      }
+
+      if (currentStep === "completed") {
+        onComplete?.();
+        return;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [currentStep, instructionIndex, showTransition, onComplete]);
+
+  const handleTransitionSubmit = async (
+    initial: string,
+    final: string,
+    rating: number,
+  ) => {
+    const ratingPerson = shuffledPeople[currentPersonIndex];
+    await writeCSVRow(
+      "emotion_transitions",
+      `${initial}_to_${final}`,
+      initial,
+      final,
+      ratingPerson,
+      rating,
+    );
+  };
+
+  const handleAllTransitionsComplete = async (ratings: TransitionRating[]) => {
+    setAllRatings((prev) => [...prev, ...ratings]);
+
+    if (currentPersonIndex + 1 < shuffledPeople.length) {
+      setShowTransition(true);
+    } else {
+      setCurrentFormIndex(1);
+      setCurrentStep("selfFrequency");
+      console.log("All ratings completed:", allRatings.concat(ratings));
+    }
+  };
+
+
+
+
 
   if (currentStep === "completed") {
     onComplete?.();
