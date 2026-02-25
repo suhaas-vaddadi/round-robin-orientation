@@ -103,18 +103,20 @@ export default function EmotionsRating({
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
-      <div className=" max-w-4xl mx-auto px-8">
-        <p className="text-white text-2xl mb-16">
+      <div className="w-full max-w-4xl mx-auto px-8">
+        <p className="text-white text-2xl mb-12">
          Given the situation, to what degree would {ratingPerson} feel {currentTransition.emotion}?
         </p>
 
         <div>
 
-          <p className="text-white text-2xl text-center mt-8 mb-24">
-            {currentTransition.scenerio}
-          </p>
+          <div className="h-24 flex items-center mt-8 mb-24">
+            <p className="text-white text-2xl">
+              {currentTransition.scenerio}
+            </p>
+          </div>
 
-          <div className="space-y-8">
+          <div className="space-y-8 w-full mx-auto">
             <div
               className="relative w-full h-2 bg-white rounded-full cursor-pointer mt-8"
               onClick={(e) => {
@@ -183,8 +185,8 @@ export default function EmotionsRating({
         isOpen={showDefaultConfirm}
         onClose={() => setShowDefaultConfirm(false)}
         onConfirm={() => {
-          setShowDefaultConfirm(false);
           submitScenerio(scenerios[currentTransitionIndex]);
+          setShowDefaultConfirm(false);
         }}
         message={`You have selected the default value of 50. Is this correct for the ${currentTransition.emotion} for ${ratingPerson}?`}
         confirmText="Continue"

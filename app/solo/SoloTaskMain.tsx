@@ -15,6 +15,15 @@ function ClassificationTaskMain({
   formData: _formData,
   onComplete,
 }: ClassificationTaskMainProps) {
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   const trail_number = useRef<number>(1);
   const csvEscape = (value: unknown) => {
     const s = value !== undefined && value !== null ? String(value) : "";
@@ -72,16 +81,14 @@ function ClassificationTaskMain({
   const [currentFormIndex, setCurrentFormIndex] = useState<number>(0);
 
     const ratingPeople = [
-    "yourself",
+    "you",
     "an average UW-Madison student",
   ];
     const [shuffledPeople] = useState<string[]>(() =>
-    [...ratingPeople].sort(() => Math.random() - 0.5),
+    shuffleArray(ratingPeople)
   );
   const [blockRandomized] = useState<string[]>(() =>
-    ["loneliness", "socialConnectedness", "expressivity"].sort(
-      () => Math.random() - 0.5,
-    ),
+    shuffleArray(["loneliness", "socialConnectedness", "expressivity"])
   );
 
   const formOrder = [

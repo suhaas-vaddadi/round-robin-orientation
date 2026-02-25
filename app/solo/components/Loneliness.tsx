@@ -68,13 +68,14 @@ export default function Loneliness({ onContinue }: ClassifcationTaskProps) {
     }
   };
 
-  const handleConfirmContinue = () => {
-    setShowConfirmationModal(false);
+  const handleConfirmContinue = async () => {
     const data = {
       matrixSelections: matrixSelections,
       order: shuffledQuestions,
     };
     onContinue?.(data);
+    setShowConfirmationModal(false);
+
   };
 
   const handleCancelContinue = () => {

@@ -53,8 +53,9 @@ function MatrixSlider({
             key={rowIndex}
             className="border-b border-gray-600 pb-4 text-center justify-center items-center"
           >
-            <div className="flex items-center justify-between mb-3 text-center">
-              <label className="text-white text-lg flex-1 pr-4">{row}</label>
+            <div className="flex items-center justify-between mb-3">
+              <div className="min-w-[3rem]"></div>
+              <label className="text-white text-lg font-semibold text-center mr-7">{row}</label>
               <div className="text-white text-sm font-mono min-w-[3rem] text-right">
                 {interactedRows.has(rowIndex)
                   ? selections[row] ?? defaultSelection

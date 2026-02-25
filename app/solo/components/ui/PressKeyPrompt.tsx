@@ -8,7 +8,7 @@ export default function PressKeyPrompt({
   text = "to continue",
 }: PressKeyPromptProps) {
   return (
-    <div className="mt-32 p-4 bg-gray-800 rounded-lg border border-gray-600">
+    <div className="mt-24 p-4 bg-gray-800 rounded-lg border border-gray-600">
       <p className="text-white text-2xl text-center">
         Press{" "}
         {keyLabel != "any key" && (

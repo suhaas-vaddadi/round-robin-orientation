@@ -16,7 +16,7 @@ export interface AnsweredEmotionalScenerio {
 export const emotionalScenerios: EmotionalScenerio[] = [
     {
         emotion: "Anger",
-        scenerio: "You have been betrayed by a friend"
+        scenerio: "You have been betrayed by a friend."
     },
     {
         emotion: "Anger",
