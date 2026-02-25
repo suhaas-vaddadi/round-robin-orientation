@@ -8,8 +8,8 @@ import SocialConnectedness from "./components/SocialConnectedness";
 import Expressivity from "./components/Expressivity";
 import StudyFeedback from "./components/StudyFeedback";
 import Autism from "./components/Autism";
-import { emotionTransitions } from "./components/types";
-import { ClassificationTaskMainProps, TransitionRating, StepData, PartnerHistoryData, SelfFrequencyData, MatrixData, StudyFeedbackData, PartnerSlidersData } from "./components/types";
+import { emotionalScenerios } from "./components/types";
+import { ClassificationTaskMainProps, StepData, SelfFrequencyData, MatrixData, AnsweredEmotionalScenerio } from "./components/types";
 
 function ClassificationTaskMain({
   formData: _formData,
@@ -31,7 +31,7 @@ function ClassificationTaskMain({
     return s;
   };
 
-  const writeCSVRow = async (
+  const writeToCloudSQL = async (
     ratingTask: string,
     subTask: string,
     emotion1: string = "",
@@ -39,32 +39,35 @@ function ClassificationTaskMain({
     ratingPerson: string = "",
     response: number | string = "",
   ) => {
-    return; // File saving disabled for test run
-    const row = [
-      _formData.dyadId,
-      _formData.participantId,
-      _formData.subjectInitials,
-      _formData.raName,
-      _formData.sessionTime,
-      _formData.sessionDate,
-      new Date().toISOString(),
-      ratingTask,
-      subTask,
-      emotion1,
-      emotion2,
-      ratingPerson,
-      response,
-      trail_number.current,
-      "1.0.3",
-    ]
-      .map(csvEscape)
-      .join(",");
+    try {
+      // Example implementation using Google Cloud SQL logic (e.g. via an API route)
+      const payload = {
+        ratingTask,
+        subTask,
+        emotion1,
+        emotion2,
+        ratingPerson,
+        response,
+        timestamp: new Date().toISOString()
+      };
+      
+      await fetch('/api/db/insert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          table: 'survey_results',
+          data: payload
+        })
+      });
+    } catch (e) {
+      console.error("Failed to write to Cloud SQL:", e);
+    }
   };
 
   const [currentStep, setCurrentStep] = useState<string>("instructions");
   const [instructionIndex, setInstructionIndex] = useState<number>(0);
   const [currentPersonIndex, setCurrentPersonIndex] = useState<number>(0);
-  const [allRatings, setAllRatings] = useState<TransitionRating[]>([]);
+  const [allRatings, setAllRatings] = useState<AnsweredEmotionalScenerio[]>([]);
   const [showTransition, setShowTransition] = useState<boolean>(false);
   const [currentFormIndex, setCurrentFormIndex] = useState<number>(0);
 
@@ -84,15 +87,10 @@ function ClassificationTaskMain({
   const formOrder = [
     "emotionTransitions",
     "selfFrequency",
-    "experience",
-    "partnerSliders",
     blockRandomized[0],
     blockRandomized[1],
     blockRandomized[2],
     "autism",
-    "partnerHistory",
-    "demographics",
-    "studyFeedback",
   ];
 
     const handleTransitionKeyPress = () => {
@@ -108,54 +106,11 @@ function ClassificationTaskMain({
       case "ratings":
         setCurrentStep(formOrder[currentFormIndex]);
         break;
-      case "partnerHistory":
-        const partnerData = stepData as PartnerHistoryData;
-        await writeCSVRow(
-          "partner_history",
-          "Have you met your partner prior to today's study?",
-          "",
-          "",
-          "",
-          partnerData?.partnerHistory ? "Yes" : "No",
-        );
-        await writeCSVRow(
-          "partner_history",
-          "How long have you known your partner? (in months)",
-          "",
-          "",
-          "",
-          partnerData?.partnerHistoryMonths ?? "",
-        );
-        await writeCSVRow(
-          "partner_history",
-          "I am happy with my friendship with my partner",
-          "",
-          "",
-          "",
-          partnerData?.matrixSelections?.[0] ?? "",
-        );
-        await writeCSVRow(
-          "partner_history",
-          "My partner is fun to sit and talk with",
-          "",
-          "",
-          "",
-          partnerData?.matrixSelections?.[1] ?? "",
-        );
-
-        if (currentFormIndex < formOrder.length - 1) {
-          setCurrentFormIndex(currentFormIndex + 1);
-          setCurrentStep(formOrder[currentFormIndex + 1]);
-        } else {
-          setCurrentStep("completed");
-          onComplete?.();
-        }
-        break;
       case "selfFrequency":
         const selfData = stepData as SelfFrequencyData;
         if (selfData && selfData.order && selfData.ratings) {
           for (const emotion of selfData.order) {
-            await writeCSVRow(
+            await writeToCloudSQL(
               "self_frequency",
               `How often do you feel ${emotion}?`,
               "",
@@ -182,7 +137,7 @@ function ClassificationTaskMain({
           lonelinessData.matrixSelections
         ) {
           for (const [index, question] of lonelinessData.order.entries()) {
-            await writeCSVRow(
+            await writeToCloudSQL(
               "loneliness",
               question,
               "",
@@ -200,33 +155,11 @@ function ClassificationTaskMain({
           onComplete?.();
         }
         break;
-      case "partnerSliders":
-        const slidersData = stepData as PartnerSlidersData;
-        if (slidersData && slidersData.order && slidersData.sliderSelections) {
-          for (const [index, question] of slidersData.order.entries()) {
-            await writeCSVRow(
-              "partner_sliders",
-              question,
-              "",
-              "",
-              "",
-              slidersData.sliderSelections?.[index] ?? "",
-            );
-          }
-        }
-        if (currentFormIndex < formOrder.length - 1) {
-          setCurrentFormIndex(currentFormIndex + 1);
-          setCurrentStep(formOrder[currentFormIndex + 1]);
-        } else {
-          setCurrentStep("completed");
-          onComplete?.();
-        }
-        break;
       case "autism":
         const autismData = stepData as MatrixData;
         if (autismData && autismData.order && autismData.matrixSelections) {
           for (const [index, question] of autismData.order.entries()) {
-            await writeCSVRow(
+            await writeToCloudSQL(
               "autism",
               question,
               "",
@@ -248,7 +181,7 @@ function ClassificationTaskMain({
         const socialData = stepData as MatrixData;
         if (socialData && socialData.order && socialData.matrixSelections) {
           for (const [index, question] of socialData.order.entries()) {
-            await writeCSVRow(
+            await writeToCloudSQL(
               "social_connectedness",
               question,
               "",
@@ -274,7 +207,7 @@ function ClassificationTaskMain({
           expressivityData.matrixSelections
         ) {
           for (const [index, question] of expressivityData.order.entries()) {
-            await writeCSVRow(
+            await writeToCloudSQL(
               "expressivity",
               question,
               "",
@@ -292,24 +225,6 @@ function ClassificationTaskMain({
           onComplete?.();
         }
         break;
-      case "studyFeedback":
-        const feedbackData = stepData as StudyFeedbackData;
-        await writeCSVRow(
-          "study_feedback",
-          "We're interested in hearing more about your experience with our study. Please share any thoughts you have below.",
-          "",
-          "",
-          "",
-          feedbackData?.text ?? "",
-        );
-        if (currentFormIndex < formOrder.length - 1) {
-          setCurrentFormIndex(currentFormIndex + 1);
-          setCurrentStep(formOrder[currentFormIndex + 1]);
-        } else {
-          setCurrentStep("completed");
-          onComplete?.();
-        }
-        break;
       default:
         break;
     }
@@ -319,7 +234,7 @@ function ClassificationTaskMain({
   useEffect(() => {
     const handleKeyPress = async (_event: KeyboardEvent) => {
       if (currentStep === "instructions") {
-        if (instructionIndex + 1 >= 10) {
+        if (instructionIndex + 1 >= 3) {
           handleStepComplete();
           return;
         }
@@ -344,22 +259,20 @@ function ClassificationTaskMain({
   }, [currentStep, instructionIndex, showTransition, onComplete]);
 
   const handleTransitionSubmit = async (
-    initial: string,
-    final: string,
-    rating: number,
+    result: AnsweredEmotionalScenerio
   ) => {
     const ratingPerson = shuffledPeople[currentPersonIndex];
-    await writeCSVRow(
-      "emotion_transitions",
-      `${initial}_to_${final}`,
-      initial,
-      final,
+    await writeToCloudSQL(
+      "emotion_rating",
+      result.scenerio,
+      result.emotion,
+      "",
       ratingPerson,
-      rating,
+      result.rating,
     );
   };
 
-  const handleAllTransitionsComplete = async (ratings: TransitionRating[]) => {
+  const handleAllTransitionsComplete = async (ratings: AnsweredEmotionalScenerio[]) => {
     setAllRatings((prev) => [...prev, ...ratings]);
 
     if (currentPersonIndex + 1 < shuffledPeople.length) {
@@ -370,9 +283,6 @@ function ClassificationTaskMain({
       console.log("All ratings completed:", allRatings.concat(ratings));
     }
   };
-
-
-
 
 
   if (currentStep === "completed") {
@@ -390,16 +300,9 @@ function ClassificationTaskMain({
               instructionIndex={instructionIndex}
               groupSize={3}
               instructions={[
-                "You will be presented with pairs of emotions.",
-                "The first emotion denotes the current state; the second emotion denotes the next emotional state.",
-                "Your task is to estimate the likelihood of a person feeling the first emotion later feeling the second emotion.",
-                "For this example, what is the chance of a person currently feeling Tired next feeling Excited?",
-                "You will make your rating on a scale from 0-100%, where 0% means that there is zero chance that a person feeling tired will feel excited next, and where 100% means that a person feeling tired now will definitely feel excited next.",
-                "You will be asked to provide ratings for three different people: yourself, your partner, and an average UW-Madison student.",
-                "The three people will be presented in random order.",
-                "For each person, please try to be as accurate as possible.",
-                "This part will take approximately 30 minutes.",
-                "We ask that you answer each question efficiently in order to keep your participation time within one hour.",
+                "You will be presented with a set of scenarios.",
+                "Your task is to estimate the [likelihood/intensity] a person would feel the given emotion in each scenario.",
+                "You will give these estimates on a scale of 0 (not at all) to 100 (extremely)."
               ]}
             />
           </div>
@@ -428,51 +331,43 @@ function ClassificationTaskMain({
                   </div>
                 </div>
               </div>
-            ) : shuffledPeople.length > 0 ? (
+            ) :  (
               <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
                 <EmotionsRating
-                  emotionTransitions={emotionTransitions}
                   ratingPerson={shuffledPeople[currentPersonIndex]}
+                  scenerios={emotionalScenerios}
                   onTransitionSubmit={handleTransitionSubmit}
                   onAllTransitionsComplete={handleAllTransitionsComplete}
                 />
               </div>
-            ) : (
-              <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
-                <div className="text-center max-w-4xl mx-auto px-8">
-                  <h1 className="text-white text-2xl mb-8">
-                    Loading...
-                  </h1>
-                </div>
-              </div>
-            )}
+             )}
           </>
         )}
 
         {currentStep === "selfFrequency" && (
-          <SelfFrequency onContinue={(data) => handleStepComplete(data)} />
+          <SelfFrequency onContinue={(data) => handleStepComplete(data as StepData)} />
         )}
 
         {currentStep === "loneliness" && (
-          <Loneliness onContinue={(data) => handleStepComplete(data)} />
+          <Loneliness onContinue={(data) => handleStepComplete(data as StepData)} />
         )}
 
         {currentStep === "socialConnectedness" && (
           <SocialConnectedness
-            onContinue={(data) => handleStepComplete(data)}
+            onContinue={(data) => handleStepComplete(data as StepData)}
           />
         )}
 
         {currentStep === "expressivity" && (
-          <Expressivity onContinue={(data) => handleStepComplete(data)} />
+          <Expressivity onContinue={(data) => handleStepComplete(data as StepData)} />
         )}
 
         {currentStep === "autism" && (
-          <Autism onContinue={(data) => handleStepComplete(data)} />
+          <Autism onContinue={(data) => handleStepComplete(data as StepData)} />
         )}
 
         {currentStep === "studyFeedback" && (
-          <StudyFeedback onContinue={(data) => handleStepComplete(data)} />
+          <StudyFeedback onContinue={(data) => handleStepComplete(data as StepData)} />
         )}
       </div>
     </div>

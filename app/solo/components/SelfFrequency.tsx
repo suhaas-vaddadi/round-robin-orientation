@@ -11,24 +11,17 @@ export default function SelfFrequency({ onContinue }: ClassifcationTaskProps) {
     useState<boolean>(false);
   const [touchedRows, setTouchedRows] = useState<Set<string>>(new Set());
 
-  // Randomize emotion order
   const [shuffledEmotions] = useState(() => {
     const emotions = [
-      "confident",
-      "grouchy",
-      "sad",
-      "assertive",
-      "unrestrained",
-      "nervous",
-      "irritable",
-      "lively",
-      "bold",
-      "talkative",
-      "satisfaction",
-      "love",
-      "contempt",
-      "disgust",
-      "embarrassment",
+      "Anger",
+      "Guilt",
+      "Anxiety/Fear",
+      "Happiness", 
+      "Sadness", 
+      "Interest",
+      "Sympathy",
+      "Boredom",
+      "Relief",
     ];
     return [...emotions].sort(() => Math.random() - 0.5);
   });
@@ -47,7 +40,7 @@ export default function SelfFrequency({ onContinue }: ClassifcationTaskProps) {
   };
 
   const isFormValid = () => {
-    const totalEmotions = 15;
+    const totalEmotions = 9;
     return touchedRows.size === totalEmotions;
   };
 

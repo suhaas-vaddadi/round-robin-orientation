@@ -1,23 +1,15 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import PressKeyPrompt from "./ui/PressKeyPrompt";
 import ConfirmationModal from "./ui/ConfirmationModal";
+import { EmotionalScenerio, AnsweredEmotionalScenerio } from "./types";
 
-interface Transition {
-  initial: string;
-  final: string;
-}
+
 
 interface TransitionRatingProps {
   ratingPerson: string;
-  emotionTransitions: Transition[];
-  onTransitionSubmit?: (initial: string, final: string, rating: number) => void;
-  onAllTransitionsComplete?: (ratings: TransitionRating[]) => void;
-}
-
-interface TransitionRating {
-  initial: string;
-  final: string;
-  rating: number;
+  scenerios: EmotionalScenerio[];
+  onTransitionSubmit?: (result: AnsweredEmotionalScenerio) => void;
+  onAllTransitionsComplete?: (ratings: AnsweredEmotionalScenerio[]) => void;
 }
 
 const shuffleArray = <T,>(array: T[]): T[] => {
@@ -31,98 +23,69 @@ const shuffleArray = <T,>(array: T[]): T[] => {
 
 export default function EmotionsRating({
   ratingPerson,
-  emotionTransitions,
+  scenerios,
   onTransitionSubmit,
   onAllTransitionsComplete,
 }: TransitionRatingProps) {
   const [rating, setRating] = useState<number>(50);
   const [currentTransitionIndex, setCurrentTransitionIndex] =
     useState<number>(0);
-  const [shuffledTransitions, setShuffledTransitions] = useState<Transition[]>(
-    [],
-  );
-  const [completedRatings, setCompletedRatings] = useState<TransitionRating[]>(
-    [],
-  );
-  const [isComplete, setIsComplete] = useState<boolean>(false);
+  const [shuffledTransitions] = useState<EmotionalScenerio[]>(() => shuffleArray(scenerios));
+  const [completedRatings, setCompletedRatings] = useState<AnsweredEmotionalScenerio[]>([]);
   const [canSubmitAtMs, setCanSubmitAtMs] = useState<number>(0);
   const [showDefaultConfirm, setShowDefaultConfirm] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (emotionTransitions.length > 0) {
-      const shuffled = shuffleArray(emotionTransitions);
-      setShuffledTransitions(shuffled);
-    }
-  }, [emotionTransitions]);
 
-  const handleTransitionSubmit = useCallback(
-    (initial: string, final: string, ratingValue: number) => {
-      const newRating: any = {
-        initial,
-        final,
-        rating: ratingValue,
-        person: ratingPerson,
-      };
 
-      setCompletedRatings((prev) => [...prev, newRating]);
-
-      onTransitionSubmit?.(initial, final, ratingValue);
-
-      if (currentTransitionIndex + 1 >= shuffledTransitions.length) {
-        setIsComplete(true);
-        onAllTransitionsComplete?.(completedRatings.concat([newRating]));
-      } else {
-        setCurrentTransitionIndex((prev) => prev + 1);
-        setRating(50);
-      }
-    },
-    [
-      currentTransitionIndex,
-      shuffledTransitions.length,
-      onTransitionSubmit,
-      onAllTransitionsComplete,
-      completedRatings,
-    ],
-  );
 
   useEffect(() => {
     setCanSubmitAtMs(Date.now() + 500);
-  }, [currentTransitionIndex]);
+  })
+
+
+    const submitScenerio = async(scenerio: EmotionalScenerio) => {
+    const temp: AnsweredEmotionalScenerio = {
+      emotion: scenerio.emotion,
+      scenerio: scenerio.scenerio,
+      rating: rating
+    }
+    const newCompleted = [...completedRatings, temp];
+    onTransitionSubmit?.(temp);
+    setCompletedRatings(newCompleted);
+
+    if(newCompleted.length === shuffledTransitions.length){
+      onAllTransitionsComplete?.(newCompleted);
+      return;
+    }
+    setCurrentTransitionIndex(currentTransitionIndex + 1);
+    setRating(50);
+  }
+
 
   useEffect(() => {
+
+
     const handleKeyPress = (event: KeyboardEvent) => {
+      
       if (
         event.key === "Tab" &&
-        !isComplete &&
-        shuffledTransitions.length > 0 &&
         Date.now() >= canSubmitAtMs
       ) {
         event.preventDefault();
-        const currentTransition = shuffledTransitions[currentTransitionIndex];
 
         if (rating === 50) {
           setShowDefaultConfirm(true);
           return;
         }
-
-        handleTransitionSubmit(
-          currentTransition.initial,
-          currentTransition.final,
-          rating,
-        );
+        else{
+          submitScenerio(scenerios[currentTransitionIndex]);
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [
-    rating,
-    currentTransitionIndex,
-    shuffledTransitions,
-    handleTransitionSubmit,
-    isComplete,
-    canSubmitAtMs,
-  ]);
+  }, [rating, currentTransitionIndex, shuffledTransitions, canSubmitAtMs, completedRatings.length, scenerios, onTransitionSubmit, completedRatings, onAllTransitionsComplete]);
 
   if (shuffledTransitions.length === 0) {
     return (
@@ -141,25 +104,27 @@ export default function EmotionsRating({
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
       <div className=" max-w-4xl mx-auto px-8">
-        <p className="text-white text-2xl mb-32">
-          Please rate the likelihood (0%-100%) of the following emotion
-          transition for {ratingPerson}:
+        <p className="text-white text-2xl mb-16">
+         Given the situation, to what degree would {ratingPerson} feel {currentTransition.emotion}?
         </p>
 
         <div>
-          <p className="text-white text-2xl text-center mb-16">
-            {currentTransition.initial} → {currentTransition.final}
+
+          <p className="text-white text-2xl text-center mt-8 mb-24">
+            {currentTransition.scenerio}
           </p>
 
           <div className="space-y-8">
             <div
-              className="relative w-full h-2 bg-white rounded-full cursor-pointer"
+              className="relative w-full h-2 bg-white rounded-full cursor-pointer mt-8"
               onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 const position = ((e.clientX - rect.left) / rect.width) * 100;
                 setRating(Math.max(0, Math.min(100, position)));
               }}
             >
+              <span className="absolute -top-10 left-0 transform -translate-x-1/2 text-white text-lg whitespace-nowrap">not at all</span>
+              <span className="absolute -top-10 left-full transform -translate-x-1/2 text-white text-lg whitespace-nowrap">extremely</span>
               <div
                 className="absolute w-6 h-6 bg-white rounded-full top-1/2 cursor-pointer"
                 style={{
@@ -205,7 +170,7 @@ export default function EmotionsRating({
               ))}
             </div>
 
-            <p className="text-white text-2xl mt-40 text-center">
+            <p className="text-white text-2xl mt-32 text-center">
               Selected: {Math.round(rating)}%
             </p>
 
@@ -219,13 +184,9 @@ export default function EmotionsRating({
         onClose={() => setShowDefaultConfirm(false)}
         onConfirm={() => {
           setShowDefaultConfirm(false);
-          handleTransitionSubmit(
-            currentTransition.initial,
-            currentTransition.final,
-            rating,
-          );
+          submitScenerio(scenerios[currentTransitionIndex]);
         }}
-        message={`You have selected the default value of 50. Is this correct for the transition between ${currentTransition.initial} to ${currentTransition.final} for ${ratingPerson}?`}
+        message={`You have selected the default value of 50. Is this correct for the ${currentTransition.emotion} for ${ratingPerson}?`}
         confirmText="Continue"
         cancelText="Close"
       />
