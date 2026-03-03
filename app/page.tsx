@@ -8,9 +8,8 @@ type Screen = "participant info" | "individual difference" | "completed";
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("participant info");
   const [formData, setFormData] = useState({
-    dyadId: "",
     participantId: "",
-    subjectInitials: "",
+    fullName: "",
     raName: "",
     sessionTime: "",
     sessionDate: "",

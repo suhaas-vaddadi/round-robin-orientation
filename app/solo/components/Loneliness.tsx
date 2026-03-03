@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import MatrixQuestion from "./ui/MatrixQuestion";
 import { ClassifcationTaskProps } from "./types";
 import ConfirmationModal from "./ui/ConfirmationModal";
-export default function Loneliness({ onContinue }: ClassifcationTaskProps) {
+
+export default function Loneliness({ onContinue, loading, initialData }: ClassifcationTaskProps) {
   const [matrixSelections, setMatrixSelections] = useState<{
     [key: number]: number;
   }>({});
   const [showConfirmationModal, setShowConfirmationModal] =
     useState<boolean>(false);
   const [shuffledQuestions, setShuffledQuestions] = useState<string[]>([]);
+  const [hasInitialized, setHasInitialized] = useState<boolean>(false);
 
   const originalQuestions = [
     'How often do you feel that you are "in tune" with the people around you?',
@@ -38,10 +40,27 @@ export default function Loneliness({ onContinue }: ClassifcationTaskProps) {
     setShuffledQuestions(shuffled);
   }, []);
 
+  useEffect(() => {
+    if (initialData && Array.isArray(initialData) && shuffledQuestions.length > 0 && !hasInitialized) {
+      const initSels: { [key: number]: number } = {};
+      initialData.forEach((row: any) => {
+         const index = shuffledQuestions.findIndex(q => q === row.subTask);
+         if (index !== -1) {
+             initSels[index] = Number(row.response);
+         }
+      });
+      if (Object.keys(initSels).length > 0) {
+          setMatrixSelections(initSels);
+          setHasInitialized(true);
+      }
+    }
+  }, [initialData, shuffledQuestions, hasInitialized]);
+
   const handleMatrixSelectionChange = (
     rowIndex: number,
     columnIndex: number
   ) => {
+    if (loading) return;
     setMatrixSelections((prev) => ({
       ...prev,
       [rowIndex]: columnIndex,
@@ -56,7 +75,9 @@ export default function Loneliness({ onContinue }: ClassifcationTaskProps) {
       Object.values(matrixSelections).every((selection) => selection != null)
     );
   };
+  
   const handleContinue = () => {
+    if (loading) return;
     if (isFormValid()) {
       const data = {
         matrixSelections: matrixSelections,
@@ -99,9 +120,10 @@ export default function Loneliness({ onContinue }: ClassifcationTaskProps) {
         <button
           type="button"
           onClick={handleContinue}
-          className={`px-8 py-3 rounded-lg font-semibold transition-colors ${"bg-white text-black hover:bg-gray-200"}`}
+          disabled={loading}
+          className={`px-8 py-3 rounded-lg font-semibold transition-colors ${loading ? "bg-gray-500 text-white cursor-not-allowed" : "bg-white text-black hover:bg-gray-200"}`}
         >
-          Continue
+          {loading ? "Submitting..." : "Continue"}
         </button>
       </div>
 

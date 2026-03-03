@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import PressKeyPrompt from "./components/ui/PressKeyPrompt";
 import Instructions from "./components/ui/Instructions";
-import EmotionsRating from "./components/EmotionsRating";
+import EmotionScenerio from "./components/EmotionScenerio";
 import SelfFrequency from "./components/SelfFrequency";
 import Loneliness from "./components/Loneliness";
 import SocialConnectedness from "./components/SocialConnectedness";
 import Expressivity from "./components/Expressivity";
-import StudyFeedback from "./components/StudyFeedback";
 import Autism from "./components/Autism";
-import { emotionalScenerios } from "./components/types";
+import { yourselfEmotionalScenerios, averageUWEmotionalScenerios } from "./components/types";
 import { ClassificationTaskMainProps, StepData, SelfFrequencyData, MatrixData, AnsweredEmotionalScenerio } from "./components/types";
 
 function ClassificationTaskMain({
@@ -40,39 +39,6 @@ function ClassificationTaskMain({
     return s;
   };
 
-  const writeToCloudSQL = async (
-    ratingTask: string,
-    subTask: string,
-    emotion1: string = "",
-    emotion2: string = "",
-    ratingPerson: string = "",
-    response: number | string = "",
-  ) => {
-    try {
-      // Example implementation using Google Cloud SQL logic (e.g. via an API route)
-      const payload = {
-        ratingTask,
-        subTask,
-        emotion1,
-        emotion2,
-        ratingPerson,
-        response,
-        timestamp: new Date().toISOString()
-      };
-      
-      await fetch('/api/db/insert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          table: 'survey_results',
-          data: payload
-        })
-      });
-    } catch (e) {
-      console.error("Failed to write to Cloud SQL:", e);
-    }
-  };
-
   const [currentStep, setCurrentStep] = useState<string>("instructions");
   const [instructionIndex, setInstructionIndex] = useState<number>(0);
   const [currentPersonIndex, setCurrentPersonIndex] = useState<number>(0);
@@ -80,11 +46,18 @@ function ClassificationTaskMain({
   const [showTransition, setShowTransition] = useState<boolean>(false);
   const [currentFormIndex, setCurrentFormIndex] = useState<number>(0);
 
-    const ratingPeople = [
+  // Data fetching and UI state
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isFetchingInitialData, setIsFetchingInitialData] = useState<boolean>(true);
+  
+  // Initial Data
+  const [initialDataStore, setInitialDataStore] = useState<any>({});
+
+  const ratingPeople = [
     "you",
     "an average UW-Madison student",
   ];
-    const [shuffledPeople] = useState<string[]>(() =>
+  const [shuffledPeople] = useState<string[]>(() =>
     shuffleArray(ratingPeople)
   );
   const [blockRandomized] = useState<string[]>(() =>
@@ -97,15 +70,66 @@ function ClassificationTaskMain({
     blockRandomized[0],
     blockRandomized[1],
     blockRandomized[2],
-    "autism",
+    "autism"
   ];
 
-    const handleTransitionKeyPress = () => {
+  useEffect(() => {
+    const loadInitialData = async () => {
+      try {
+        setIsFetchingInitialData(true);
+        const participantId = _formData.participantId;
+        
+        const [resEmotions, resLoneliness, resAutism, resSelfFrequency, resSocial, resExpressivity] = await Promise.all([
+          fetch(`/api/emotion_rating?participant_id=${participantId}`),
+          fetch(`/api/loneliness?participant_id=${participantId}`),
+          fetch(`/api/autism?participant_id=${participantId}`),
+          fetch(`/api/self_frequency?participant_id=${participantId}`),
+          fetch(`/api/social_connectedness?participant_id=${participantId}`),
+          fetch(`/api/expressivity?participant_id=${participantId}`)
+        ]);
+
+        const parseData = async (res: Response) => {
+           if (res.ok) {
+              const json = await res.json();
+              return json.data || [];
+           }
+           return [];
+        };
+
+        const emotionsData = await parseData(resEmotions);
+        const lonelinessData = await parseData(resLoneliness);
+        const autismData = await parseData(resAutism);
+        const selfFrequencyData = await parseData(resSelfFrequency);
+        const socialData = await parseData(resSocial);
+        const expressivityData = await parseData(resExpressivity);
+
+        setInitialDataStore({
+           emotions: emotionsData,
+           loneliness: lonelinessData,
+           autism: autismData,
+           selfFrequency: selfFrequencyData,
+           socialConnectedness: socialData,
+           expressivity: expressivityData
+        });
+
+      } catch (e) {
+        console.error("Failed to load initial data", e);
+      } finally {
+        setIsFetchingInitialData(false);
+      }
+    };
+    if (_formData.participantId) {
+      loadInitialData();
+    }
+  }, [_formData.participantId]);
+
+
+  const handleTransitionKeyPress = () => {
     setShowTransition(false);
     setCurrentPersonIndex((prev) => prev + 1);
   };
 
-    const handleStepComplete = async (stepData?: StepData) => {
+  const handleStepComplete = async (stepData?: StepData) => {
     switch (currentStep) {
       case "instructions":
         setCurrentStep("ratings");
@@ -116,21 +140,28 @@ function ClassificationTaskMain({
       case "selfFrequency":
         const selfData = stepData as SelfFrequencyData;
         if (selfData && selfData.order && selfData.ratings) {
-          for (const emotion of selfData.order) {
-            await writeToCloudSQL(
-              "self_frequency",
-              `How often do you feel ${emotion}?`,
-              "",
-              "",
-              "",
-              selfData.ratings?.[emotion] ?? "",
-            );
+          try {
+            setIsSubmitting(true);
+            const payload = selfData.order.map((emotion, index) => ({
+                question: `How often do you feel ${emotion}?`,
+                rating: typeof selfData.ratings?.[emotion] === 'number' ? selfData.ratings[emotion] : null,
+                index: index
+            }));
+            await fetch(`/api/self_frequency`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    participant_id: _formData.participantId,
+                    ratings: payload
+                })
+            });
+          } finally {
+            setIsSubmitting(false);
           }
         }
         if (currentFormIndex < formOrder.length - 1) {
           setCurrentFormIndex(currentFormIndex + 1);
           setCurrentStep(formOrder[currentFormIndex + 1]);
-          console.log(formOrder[currentFormIndex + 1]);
         } else {
           setCurrentStep("completed");
           onComplete?.();
@@ -143,15 +174,23 @@ function ClassificationTaskMain({
           lonelinessData.order &&
           lonelinessData.matrixSelections
         ) {
-          for (const [index, question] of lonelinessData.order.entries()) {
-            await writeToCloudSQL(
-              "loneliness",
-              question,
-              "",
-              "",
-              "",
-              lonelinessData.matrixSelections?.[index] ?? "",
-            );
+          try {
+            setIsSubmitting(true);
+            const payload = lonelinessData.order.map((question, index) => ({
+                question: question,
+                rating: typeof lonelinessData.matrixSelections?.[index] === 'number' ? lonelinessData.matrixSelections[index] : null,
+                index: index
+            }));
+            await fetch(`/api/loneliness`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    participant_id: _formData.participantId,
+                    ratings: payload
+                })
+            });
+          } finally {
+            setIsSubmitting(false);
           }
         }
         if (currentFormIndex < formOrder.length - 1) {
@@ -165,15 +204,23 @@ function ClassificationTaskMain({
       case "autism":
         const autismData = stepData as MatrixData;
         if (autismData && autismData.order && autismData.matrixSelections) {
-          for (const [index, question] of autismData.order.entries()) {
-            await writeToCloudSQL(
-              "autism",
-              question,
-              "",
-              "",
-              "",
-              autismData.matrixSelections?.[index] ?? "",
-            );
+          try {
+             setIsSubmitting(true);
+             const payload = autismData.order.map((question, index) => ({
+                question: question,
+                rating: typeof autismData.matrixSelections?.[index] === 'number' ? autismData.matrixSelections[index] : null,
+                index: index
+             }));
+             await fetch(`/api/autism`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    participant_id: _formData.participantId,
+                    ratings: payload
+                })
+             });
+          } finally {
+             setIsSubmitting(false);
           }
         }
         if (currentFormIndex < formOrder.length - 1) {
@@ -187,16 +234,24 @@ function ClassificationTaskMain({
       case "socialConnectedness":
         const socialData = stepData as MatrixData;
         if (socialData && socialData.order && socialData.matrixSelections) {
-          for (const [index, question] of socialData.order.entries()) {
-            await writeToCloudSQL(
-              "social_connectedness",
-              question,
-              "",
-              "",
-              "",
-              socialData.matrixSelections?.[index] ?? "",
-            );
-          }
+           try {
+             setIsSubmitting(true);
+             const payload = socialData.order.map((question, index) => ({
+                question: question,
+                rating: typeof socialData.matrixSelections?.[index] === 'number' ? socialData.matrixSelections[index] : null,
+                index: index
+             }));
+             await fetch(`/api/social_connectedness`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    participant_id: _formData.participantId,
+                    ratings: payload
+                })
+             });
+           } finally {
+             setIsSubmitting(false);
+           }
         }
         if (currentFormIndex < formOrder.length - 1) {
           setCurrentFormIndex(currentFormIndex + 1);
@@ -213,16 +268,24 @@ function ClassificationTaskMain({
           expressivityData.order &&
           expressivityData.matrixSelections
         ) {
-          for (const [index, question] of expressivityData.order.entries()) {
-            await writeToCloudSQL(
-              "expressivity",
-              question,
-              "",
-              "",
-              "",
-              expressivityData.matrixSelections?.[index] ?? "",
-            );
-          }
+           try {
+              setIsSubmitting(true);
+              const payload = expressivityData.order.map((question, index) => ({
+                  question: question,
+                  rating: typeof expressivityData.matrixSelections?.[index] === 'number' ? expressivityData.matrixSelections[index] : null,
+                  index: index
+              }));
+              await fetch(`/api/expressivity`, {
+                 method: "POST",
+                 headers: { "Content-Type": "application/json" },
+                 body: JSON.stringify({
+                     participant_id: _formData.participantId,
+                     ratings: payload
+                 })
+              });
+           } finally {
+              setIsSubmitting(false);
+           }
         }
         if (currentFormIndex < formOrder.length - 1) {
           setCurrentFormIndex(currentFormIndex + 1);
@@ -232,6 +295,27 @@ function ClassificationTaskMain({
           onComplete?.();
         }
         break;
+      case "studyFeedback":
+        const feedbackData = stepData as Record<string, any>;
+        if (feedbackData) {
+            try {
+               setIsSubmitting(true);
+               const payload = [feedbackData.feedback ?? ""];
+               await fetch(`/api/study_feedback`, {
+                   method: "POST",
+                   headers: { "Content-Type": "application/json" },
+                   body: JSON.stringify({
+                       participant_id: _formData.participantId,
+                       feedbacks: payload
+                   })
+               });
+            } finally {
+               setIsSubmitting(false);
+            }
+        }
+        setCurrentStep("completed");
+        onComplete?.();
+        break;
       default:
         break;
     }
@@ -240,6 +324,9 @@ function ClassificationTaskMain({
 
   useEffect(() => {
     const handleKeyPress = async (_event: KeyboardEvent) => {
+      // disable keypress actions if submitting
+      if (isSubmitting) return;
+
       if (currentStep === "instructions") {
         if (instructionIndex + 1 >= 3) {
           handleStepComplete();
@@ -263,24 +350,48 @@ function ClassificationTaskMain({
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [currentStep, instructionIndex, showTransition, onComplete]);
+  }, [currentStep, instructionIndex, showTransition, onComplete, isSubmitting]);
 
   const handleTransitionSubmit = async (
     result: AnsweredEmotionalScenerio
   ) => {
-    const ratingPerson = shuffledPeople[currentPersonIndex];
-    await writeToCloudSQL(
-      "emotion_rating",
-      result.scenerio,
-      result.emotion,
-      "",
-      ratingPerson,
-      result.rating,
-    );
+    // We do NOT post single transition lines anymore. They are added to the list and all handled in handleAllTransitionsComplete
   };
 
   const handleAllTransitionsComplete = async (ratings: AnsweredEmotionalScenerio[]) => {
+    const ratingPerson = shuffledPeople[currentPersonIndex];
+
     setAllRatings((prev) => [...prev, ...ratings]);
+
+    // Construct the payload for all ratings of this person
+    try {
+        setIsSubmitting(true);
+        const payload = ratings.map((r) => ({
+            ratingTask: "emotion_rating",
+            scenerio: r.scenerio,
+            ratingPerson: ratingPerson,
+            anger: typeof r.ratings.Anger === 'number' ? r.ratings.Anger : null,
+            guilt: typeof r.ratings.Guilt === 'number' ? r.ratings.Guilt : null,
+            sadness: typeof r.ratings.Sadness === 'number' ? r.ratings.Sadness : null,
+            sympathy: typeof r.ratings.Sympathy === 'number' ? r.ratings.Sympathy : null,
+            happiness: typeof r.ratings.Happiness === 'number' ? r.ratings.Happiness : null,
+            anxiety: typeof r.ratings.Anxiety === 'number' ? r.ratings.Anxiety : null,
+            questionIndex: r.questionIndex
+        }));
+        await fetch(`/api/emotion_rating`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                participant_id: _formData.participantId,
+                ratingPerson: ratingPerson,
+                ratings: payload
+            })
+        });
+    } catch (e) {
+        console.error("Error submitting emotion ratings", e);
+    } finally {
+        setIsSubmitting(false);
+    }
 
     if (currentPersonIndex + 1 < shuffledPeople.length) {
       setShowTransition(true);
@@ -291,6 +402,13 @@ function ClassificationTaskMain({
     }
   };
 
+  if (isFetchingInitialData) {
+    return (
+      <div className="min-h-full w-full flex flex-col items-center justify-center bg-black">
+        <h1 className="text-white text-2xl animate-pulse">Loading participant data...</h1>
+      </div>
+    );
+  }
 
   if (currentStep === "completed") {
     onComplete?.();
@@ -340,11 +458,13 @@ function ClassificationTaskMain({
               </div>
             ) :  (
               <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
-                <EmotionsRating
+                <EmotionScenerio
                   ratingPerson={shuffledPeople[currentPersonIndex]}
-                  scenerios={emotionalScenerios}
+                  scenerios={shuffledPeople[currentPersonIndex] === "you" ? yourselfEmotionalScenerios : averageUWEmotionalScenerios}
                   onTransitionSubmit={handleTransitionSubmit}
                   onAllTransitionsComplete={handleAllTransitionsComplete}
+                  loading={isSubmitting}
+                  initialData={initialDataStore.emotions || []}
                 />
               </div>
              )}
@@ -352,33 +472,49 @@ function ClassificationTaskMain({
         )}
 
         {currentStep === "selfFrequency" && (
-          <SelfFrequency onContinue={(data) => handleStepComplete(data as StepData)} />
+          <SelfFrequency 
+             onContinue={(data) => handleStepComplete(data as StepData)} 
+             loading={isSubmitting}
+             initialData={initialDataStore.selfFrequency || []}
+          />
         )}
 
         {currentStep === "loneliness" && (
-          <Loneliness onContinue={(data) => handleStepComplete(data as StepData)} />
+          <Loneliness 
+             onContinue={(data) => handleStepComplete(data as StepData)} 
+             loading={isSubmitting}
+             initialData={initialDataStore.loneliness || []}
+          />
         )}
 
         {currentStep === "socialConnectedness" && (
           <SocialConnectedness
             onContinue={(data) => handleStepComplete(data as StepData)}
+            loading={isSubmitting}
+            initialData={initialDataStore.socialConnectedness || []}
           />
         )}
 
         {currentStep === "expressivity" && (
-          <Expressivity onContinue={(data) => handleStepComplete(data as StepData)} />
+          <Expressivity 
+             onContinue={(data) => handleStepComplete(data as StepData)} 
+             loading={isSubmitting}
+             initialData={initialDataStore.expressivity || []}
+          />
         )}
 
         {currentStep === "autism" && (
-          <Autism onContinue={(data) => handleStepComplete(data as StepData)} />
+          <Autism 
+             onContinue={(data) => handleStepComplete(data as StepData)} 
+             loading={isSubmitting}
+             initialData={initialDataStore.autism || []}
+          />
         )}
 
-        {currentStep === "studyFeedback" && (
-          <StudyFeedback onContinue={(data) => handleStepComplete(data as StepData)} />
-        )}
       </div>
     </div>
   );
 }
 
 export default ClassificationTaskMain;
+

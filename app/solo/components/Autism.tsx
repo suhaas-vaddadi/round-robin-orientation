@@ -3,13 +3,15 @@ import MatrixQuestion from "./ui/MatrixQuestion";
 import ConfirmationModal from "./ui/ConfirmationModal";
 
 import { ClassifcationTaskProps } from "./types";
-export default function Autism({ onContinue }: ClassifcationTaskProps) {
+
+export default function Autism({ onContinue, loading, initialData }: ClassifcationTaskProps) {
   const [matrixSelections, setMatrixSelections] = useState<{
     [key: number]: number;
   }>({});
   const [showConfirmationModal, setShowConfirmationModal] =
     useState<boolean>(false);
   const [shuffledQuestions, setShuffledQuestions] = useState<string[]>([]);
+  const [hasInitialized, setHasInitialized] = useState<boolean>(false);
 
   const originalQuestions = [
     "I often notice small sounds when others do not",
@@ -29,10 +31,27 @@ export default function Autism({ onContinue }: ClassifcationTaskProps) {
     setShuffledQuestions(shuffled);
   }, []);
 
+  useEffect(() => {
+    if (initialData && Array.isArray(initialData) && shuffledQuestions.length > 0 && !hasInitialized) {
+      const initSels: { [key: number]: number } = {};
+      initialData.forEach((row: any) => {
+         const index = shuffledQuestions.findIndex(q => q === row.subTask);
+         if (index !== -1) {
+             initSels[index] = Number(row.response);
+         }
+      });
+      if (Object.keys(initSels).length > 0) {
+          setMatrixSelections(initSels);
+          setHasInitialized(true);
+      }
+    }
+  }, [initialData, shuffledQuestions, hasInitialized]);
+
   const handleMatrixSelectionChange = (
     rowIndex: number,
     columnIndex: number,
   ) => {
+    if (loading) return;
     setMatrixSelections((prev) => ({
       ...prev,
       [rowIndex]: columnIndex,
@@ -48,6 +67,7 @@ export default function Autism({ onContinue }: ClassifcationTaskProps) {
     );
   };
   const handleContinue = () => {
+    if (loading) return;
     if (isFormValid()) {
       const data = {
         matrixSelections: matrixSelections,
@@ -94,9 +114,10 @@ export default function Autism({ onContinue }: ClassifcationTaskProps) {
         <button
           type="button"
           onClick={handleContinue}
-          className={`px-8 py-3 rounded-lg font-semibold transition-colors ${"bg-white text-black hover:bg-gray-200"}`}
+          disabled={loading}
+          className={`px-8 py-3 rounded-lg font-semibold transition-colors ${loading ? "bg-gray-500 text-white cursor-not-allowed" : "bg-white text-black hover:bg-gray-200"}`}
         >
-          Continue
+          {loading ? "Submitting..." : "Continue"}
         </button>
       </div>
 

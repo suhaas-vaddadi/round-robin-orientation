@@ -1,116 +1,82 @@
 export interface ClassifcationTaskProps {
     onContinue?: (data: unknown) => void;
+    loading?: boolean;
+    initialData?: any;
 }
 
 
-export interface EmotionalScenerio {
-    emotion: string;
-    scenerio: string;
-}
+export const EMOTIONS = [
+    "Anger",
+    "Guilt",
+    "Sadness",
+    "Sympathy",
+    "Happiness",
+    "Anxiety"
+] as const;
+
+export type Emotion = typeof EMOTIONS[number];
 
 export interface AnsweredEmotionalScenerio {
-    emotion: string;
     scenerio: string;
-    rating: number;
+    ratings: Record<string, number>;
+    questionIndex: number;
 }
-export const emotionalScenerios: EmotionalScenerio[] = [
-    {
-        emotion: "Anger",
-        scenerio: "You have been betrayed by a friend."
-    },
-    {
-        emotion: "Anger",
-        scenerio: "Someone else is to blame for the bad situation you are in."
-    },
-    {
-        emotion: "Anger",
-        scenerio: "Someone is interfering with my chance to succeed."
-    },
-    {
-        emotion: "Anger",
-        scenerio: "Someone is trying to take advantage of you."
-    },
-    {
-        emotion: "Guilt",
-        scenerio: "You have committed an act that has unintentionally had a negative impact on others."
-    },
-    {
-        emotion: "Guilt",
-        scenerio: "You are being blamed for poor performance on an assignment."
-    },
-    {
-        emotion: "Anxiety/Fear",
-        scenerio: "You are in an unknown environment."
-    },
-    {
-        emotion: "Anxiety/Fear",
-        scenerio: "You are unsure whether you can manage the situation you are in."
-    },
-    {
-        emotion: "Happiness",
-        scenerio: "You experience a situation led to a great outcome for you."
-    },
-    {
-        emotion: "Happiness",
-        scenerio: "You get what you want out of a situation."
-    },
-    {
-        emotion: "Happiness",
-        scenerio: "Things go wonderfully well for you in a situation."
-    },
-    {
-        emotion: "Sadness",
-        scenerio: "You have experienced a loss."
-    },
-    {
-        emotion: "Sadness",
-        scenerio: "Something important to you has been destroyed."
-    },
-    {
-        emotion: "Interest",
-        scenerio: "Something important has caught the interest of you."
-    },
-    {
-        emotion: "Interest",
-        scenerio: "Something being discussed relates to concerns you have dealt with in the past."
-    },
-    {
-        emotion: "Sympathy",
-        scenerio: "Another person is in a difficult situation."
-    },
-    {
-        emotion: "Sympathy",
-        scenerio: "You see another person in trouble."
-    },
-    {
-        emotion: "Sympathy",
-        scenerio: "You witness another person in need of help."
-    },
-    {
-        emotion: "Boredom",
-        scenerio: "You are in a situation that is totally unimportant."
-    },
-    {
-        emotion: "Boredom",
-        scenerio: "A discussion is occurring nearby that is none of your concern."
-    },
-    {
-        emotion: "Boredom",
-        scenerio: "You are in a situation that is not likely to impact you."
-    },
-    {
-        emotion: "Boredom",
-        scenerio: "You are in a situation that is a total waste of time."
-    },
-    {
-        emotion: "Relief",
-        scenerio: "A burden has been lifted from your mind."
-    },
-    {
-        emotion: "Relief",
-        scenerio: "You have managed to continue despite the challenges you have dealt with recently."
-    }
+
+
+export const yourselfEmotionalScenerios: string[] = [
+    "You have been betrayed by a friend.",
+    "Someone else is to blame for the bad situation you are in.",
+    "Someone is interfering with my chance to succeed.",
+    "Someone is trying to take advantage of you.",
+    "You have committed an act that has unintentionally had a negative impact on others.",
+    "You are being blamed for poor performance on an assignment.",
+    "You are in an unknown environment.",
+    "You are unsure whether you can manage the situation you are in.",
+    "You experience a situation led to a great outcome for you.",
+    "You get what you want out of a situation.",
+    "Things go wonderfully well for you in a situation.",
+    "You have experienced a loss.",
+    "Something important to you has been destroyed.",
+    "Something important has caught the interest of you.",
+    "Something being discussed relates to concerns you have dealt with in the past.",
+    "Another person is in a difficult situation.",
+    "You see another person in trouble.",
+    "You witness another person in need of help.",
+    "You are in a situation that is totally unimportant.",
+    "A discussion is occurring nearby that is none of your concern.",
+    "You are in a situation that is not likely to impact you.",
+    "You are in a situation that is a total waste of time.",
+    "A burden has been lifted from your mind.",
+    "You have managed to continue despite the challenges you have dealt with recently."
 ];
+
+export const averageUWEmotionalScenerios: string[] = [
+    "They have been betrayed by a friend.",
+    "Someone else is to blame for the bad situation they are in.",
+    "Someone is interfering with their chance to succeed.",
+    "Someone is trying to take advantage of them.",
+    "They have committed an act that has unintentionally had a negative impact on others.",
+    "They are being blamed for poor performance on an assignment.",
+    "They are in an unknown environment.",
+    "They are unsure whether they can manage the situation they are in.",
+    "They experience a situation led to a great outcome for them.",
+    "They get what they want out of a situation.",
+    "Things go wonderfully well for them in a situation.",
+    "They have experienced a loss.",
+    "Something important to them has been destroyed.",
+    "Something important has caught the interest of them.",
+    "Something being discussed relates to concerns they have dealt with in the past.",
+    "Another person is in a difficult situation.",
+    "They see another person in trouble.",
+    "They witness another person in need of help.",
+    "They are in a situation that is totally unimportant.",
+    "A discussion is occurring nearby that is none of their concern.",
+    "They are in a situation that is not likely to impact them.",
+    "They are in a situation that is a total waste of time.",
+    "A burden has been lifted from their mind.",
+    "They have managed to continue despite the challenges they have dealt with recently."
+];
+
 
 
 export interface AvailabilityData {
@@ -171,9 +137,8 @@ export type StepData =
 
 export interface ClassificationTaskMainProps {
     formData: {
-        dyadId: string;
         participantId: string;
-        subjectInitials: string;
+        fullName: string;
         raName: string;
         sessionTime: string;
         sessionDate: string;

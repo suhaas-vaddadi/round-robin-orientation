@@ -5,6 +5,8 @@ import ConfirmationModal from "./ui/ConfirmationModal";
 
 export default function SocialConnectedness({
   onContinue,
+  loading,
+  initialData,
 }: ClassifcationTaskProps) {
   const [matrixSelections, setMatrixSelections] = useState<{
     [key: number]: number;
@@ -12,6 +14,7 @@ export default function SocialConnectedness({
   const [shuffledRows, setShuffledRows] = useState<string[]>([]);
   const [showConfirmationModal, setShowConfirmationModal] =
     useState<boolean>(false);
+  const [hasInitialized, setHasInitialized] = useState<boolean>(false);
 
   const originalRows = [
     "I feel disconnected from the world around me.",
@@ -41,6 +44,22 @@ export default function SocialConnectedness({
     setShuffledRows(shuffled);
   }, []);
 
+  useEffect(() => {
+    if (initialData && Array.isArray(initialData) && shuffledRows.length > 0 && !hasInitialized) {
+      const initSels: { [key: number]: number } = {};
+      initialData.forEach((row: any) => {
+         const index = shuffledRows.findIndex(q => q === row.subTask);
+         if (index !== -1) {
+             initSels[index] = Number(row.response);
+         }
+      });
+      if (Object.keys(initSels).length > 0) {
+          setMatrixSelections(initSels);
+          setHasInitialized(true);
+      }
+    }
+  }, [initialData, shuffledRows, hasInitialized]);
+
   const columns = [
     "Strongly Disagree",
     "Disagree",
@@ -55,6 +74,7 @@ export default function SocialConnectedness({
     rowIndex: number,
     columnIndex: number
   ) => {
+    if (loading) return;
     setMatrixSelections((prev) => ({ ...prev, [rowIndex]: columnIndex }));
   };
 
@@ -66,6 +86,7 @@ export default function SocialConnectedness({
   };
 
   const handleContinue = () => {
+    if (loading) return;
     if (isFormValid()) {
       const data = {
         matrixSelections: matrixSelections,
@@ -106,9 +127,10 @@ export default function SocialConnectedness({
         <button
           type="button"
           onClick={handleContinue}
-          className="px-8 py-3 rounded-lg font-semibold transition-colors bg-white text-black hover:bg-gray-200"
+          disabled={loading}
+          className={`px-8 py-3 rounded-lg font-semibold transition-colors ${loading ? "bg-gray-500 text-white cursor-not-allowed" : "bg-white text-black hover:bg-gray-200"}`}
         >
-          Continue
+          {loading ? "Submitting..." : "Continue"}
         </button>
       </div>
       <ConfirmationModal

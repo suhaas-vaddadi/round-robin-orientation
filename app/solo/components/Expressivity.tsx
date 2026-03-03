@@ -3,13 +3,14 @@ import MatrixQuestion from "./ui/MatrixQuestion";
 import { ClassifcationTaskProps } from "./types";
 import ConfirmationModal from "./ui/ConfirmationModal";
 
-export default function Expressivity({ onContinue }: ClassifcationTaskProps) {
+export default function Expressivity({ onContinue, loading, initialData }: ClassifcationTaskProps) {
   const [matrixSelections, setMatrixSelections] = useState<{
     [key: number]: number;
   }>({});
   const [shuffledRows, setShuffledRows] = useState<string[]>([]);
   const [showConfirmationModal, setShowConfirmationModal] =
     useState<boolean>(false);
+  const [hasInitialized, setHasInitialized] = useState<boolean>(false);
 
   const originalRows = [
     "My body reacts very strongly to emotional situations.",
@@ -35,6 +36,22 @@ export default function Expressivity({ onContinue }: ClassifcationTaskProps) {
     setShuffledRows(shuffled);
   }, []);
 
+  useEffect(() => {
+    if (initialData && Array.isArray(initialData) && shuffledRows.length > 0 && !hasInitialized) {
+      const initSels: { [key: number]: number } = {};
+      initialData.forEach((row: any) => {
+         const index = shuffledRows.findIndex(q => q === row.subTask);
+         if (index !== -1) {
+             initSels[index] = Number(row.response);
+         }
+      });
+      if (Object.keys(initSels).length > 0) {
+          setMatrixSelections(initSels);
+          setHasInitialized(true);
+      }
+    }
+  }, [initialData, shuffledRows, hasInitialized]);
+
   const columns = [
     "Strongly Disagree",
     "Disagree",
@@ -49,6 +66,7 @@ export default function Expressivity({ onContinue }: ClassifcationTaskProps) {
     rowIndex: number,
     columnIndex: number,
   ) => {
+    if (loading) return;
     setMatrixSelections((prev) => ({ ...prev, [rowIndex]: columnIndex }));
   };
 
@@ -60,6 +78,7 @@ export default function Expressivity({ onContinue }: ClassifcationTaskProps) {
   };
 
   const handleContinue = () => {
+    if (loading) return;
     if (isFormValid()) {
       const data = {
         matrixSelections: matrixSelections,
@@ -100,9 +119,10 @@ export default function Expressivity({ onContinue }: ClassifcationTaskProps) {
         <button
           type="button"
           onClick={handleContinue}
-          className="px-8 py-3 rounded-lg font-semibold transition-colors bg-white text-black hover:bg-gray-200"
+          disabled={loading}
+          className={`px-8 py-3 rounded-lg font-semibold transition-colors ${loading ? "bg-gray-500 text-white cursor-not-allowed" : "bg-white text-black hover:bg-gray-200"}`}
         >
-          Continue
+          {loading ? "Submitting..." : "Continue"}
         </button>
       </div>
       <ConfirmationModal

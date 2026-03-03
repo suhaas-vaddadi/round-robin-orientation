@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MatrixSlider from "./ui/MatrixSlider";
 import { ClassifcationTaskProps } from "./types";
 import ConfirmationModal from "./ui/ConfirmationModal";
 
-export default function SelfFrequency({ onContinue }: ClassifcationTaskProps) {
+export default function SelfFrequency({ onContinue, loading, initialData }: ClassifcationTaskProps) {
   const [sliderSelections, setSliderSelections] = useState<{
     [key: string]: number;
   }>({});
@@ -26,7 +26,26 @@ export default function SelfFrequency({ onContinue }: ClassifcationTaskProps) {
     return [...emotions].sort(() => Math.random() - 0.5);
   });
 
+  useEffect(() => {
+    if (initialData && Array.isArray(initialData)) {
+      const initSels: { [key: string]: number } = {};
+      const initTouched = new Set<string>();
+      initialData.forEach((row: any) => {
+         const match = row.subTask?.match(/How often do you feel (.*?)\?/);
+         if (match && match[1]) {
+             initSels[match[1]] = Number(row.response);
+             initTouched.add(match[1]);
+         }
+      });
+      if (Object.keys(initSels).length > 0) {
+          setSliderSelections(initSels);
+          setTouchedRows(initTouched);
+      }
+    }
+  }, [initialData]);
+
   const handleSliderSelectionChange = (rowIndex: number, value: number) => {
+    if (loading) return;
     const emotion = shuffledEmotions[rowIndex];
     setSliderSelections((prev) => ({
       ...prev,
@@ -45,6 +64,7 @@ export default function SelfFrequency({ onContinue }: ClassifcationTaskProps) {
   };
 
   const handleContinue = () => {
+    if (loading) return;
     if (isFormValid()) {
       onContinue?.({ ratings: sliderSelections, order: shuffledEmotions });
     } else {
@@ -80,9 +100,10 @@ export default function SelfFrequency({ onContinue }: ClassifcationTaskProps) {
         <button
           type="button"
           onClick={handleContinue}
-          className="px-8 py-3 rounded-lg font-semibold transition-colors bg-white text-black hover:bg-gray-200"
+          disabled={loading}
+          className={`px-8 py-3 rounded-lg font-semibold transition-colors ${loading ? "bg-gray-500 text-white cursor-not-allowed" : "bg-white text-black hover:bg-gray-200"}`}
         >
-          Continue
+          {loading ? "Submitting..." : "Continue"}
         </button>
       </div>
 
