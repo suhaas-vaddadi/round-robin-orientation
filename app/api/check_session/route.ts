@@ -15,8 +15,8 @@ export async function GET(request: Request) {
         const conn = await pool.getConnection();
 
         const [rows] = await conn.execute(
-            `SELECT session_state FROM RoundRobinStudy.Participant WHERE participant_id = ? AND full_name = ? AND email = ?;`,
-            [participantId, fullName, email]
+            `SELECT session_state FROM RoundRobinStudy.Participant WHERE participant_id = ?`,
+            [participantId]
         );
         conn.release();
 
