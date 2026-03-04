@@ -54,7 +54,7 @@ function ClassificationTaskMain({
   const [initialDataStore, setInitialDataStore] = useState<any>({});
 
   const ratingPeople = [
-    "you",
+    "yourself",
     "an average UW-Madison student",
   ];
   const [shuffledPeople] = useState<string[]>(() =>
@@ -444,7 +444,7 @@ function ClassificationTaskMain({
                 <div className=" max-w-4xl mx-auto">
                   <h1 className="text-white text-2xl">Phase Complete!</h1>
                   <p className="text-white text-2xl pt-32">
-                    You have completed all emotion transition ratings for{" "}
+                    You have completed all emotion scenerio ratings for{" "}
                     {shuffledPeople[currentPersonIndex]}.
                   </p>
                   <p className="text-white text-2xl pt-32">
@@ -463,8 +463,9 @@ function ClassificationTaskMain({
             ) :  (
               <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
                 <EmotionScenerio
+                  key={shuffledPeople[currentPersonIndex]}
                   ratingPerson={shuffledPeople[currentPersonIndex]}
-                  scenerios={shuffledPeople[currentPersonIndex] === "you" ? yourselfEmotionalScenerios : averageUWEmotionalScenerios}
+                  scenerios={shuffledPeople[currentPersonIndex] === "yourself" ? yourselfEmotionalScenerios : averageUWEmotionalScenerios}
                   onTransitionSubmit={handleTransitionSubmit}
                   onAllTransitionsComplete={handleAllTransitionsComplete}
                   loading={isSubmitting}

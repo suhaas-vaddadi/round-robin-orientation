@@ -71,7 +71,11 @@ export default function EmotionScenerio({
       
       if (prefilled.length > 0) {
           setCompletedRatings(prefilled);
-          setCurrentTransitionIndex(prefilled.length);
+          if (prefilled.length >= shuffledTransitions.length) {
+              onAllTransitionsComplete?.(prefilled);
+          } else {
+              setCurrentTransitionIndex(prefilled.length);
+          }
       }
       setHasInitialized(true);
     }
@@ -125,7 +129,7 @@ export default function EmotionScenerio({
     <div className="min-h-screen w-full flex flex-col items-center py-16 bg-black overflow-y-auto">
       <div className="w-full max-w-4xl mx-auto px-8">
         <p className="text-white text-2xl mb-12">
-         Given the situation, to what degree would {ratingPerson} feel each of these emotions?
+         Given the situation, to what degree would {ratingPerson === "yourself" ? "you" : ratingPerson} feel each of these emotions?
         </p>
 
         <div>
