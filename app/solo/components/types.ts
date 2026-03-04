@@ -139,9 +139,7 @@ export interface ClassificationTaskMainProps {
     formData: {
         participantId: string;
         fullName: string;
-        raName: string;
-        sessionTime: string;
-        sessionDate: string;
+        email: string;
     };
     csvFilePath: string;
     onComplete?: () => void;

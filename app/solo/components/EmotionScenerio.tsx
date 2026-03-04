@@ -39,6 +39,10 @@ export default function EmotionScenerio({
   const [hasInitialized, setHasInitialized] = useState<boolean>(false);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentTransitionIndex]);
+
+  useEffect(() => {
     if (initialData && Array.isArray(initialData) && !hasInitialized && shuffledTransitions.length > 0) {
       const prefilled: AnsweredEmotionalScenerio[] = [];
       const personPrefix = ratingPerson === "yourself" ? "Self" : "UW";
@@ -193,7 +197,7 @@ export default function EmotionScenerio({
                 </div>
 
                 <p className="text-white text-lg mt-8 text-center pt-4">
-                  Selected: {Math.round(ratings[emotion])}%
+                  Selected: {Math.round(ratings[emotion])}
                 </p>
               </div>
             ))}

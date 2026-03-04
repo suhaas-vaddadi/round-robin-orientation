@@ -5,9 +5,7 @@ interface ParticipantFormProps {
   formData: {
     participantId: string;
     fullName: string;
-    raName: string;
-    sessionTime: string;
-    sessionDate: string;
+    email: string;
   };
   onChange: (field: string, value: string) => void;
   onSubmit: () => void;
@@ -31,7 +29,7 @@ function ParticipantForm({
     setErrorMsg("");
 
     try {
-      const res = await fetch(`/api/check_session?participant_id=${formData.participantId}`);
+      const res = await fetch(`/api/check_session?participant_id=${formData.participantId}&full_name=${encodeURIComponent(formData.fullName)}&email=${encodeURIComponent(formData.email)}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -41,9 +39,9 @@ function ParticipantForm({
       }
 
       // change this back to 0 and 1 after testing
-      if (data.session_state === 1) {
+      if (data.session_state === 0) {
         setErrorMsg("You have not completed the scheduler yet. If you think it is a mistake, double check your participant id or alert the researcher.");
-      } else if (data.session_state === 0) {
+      } else if (data.session_state === 1) {
         onSubmit();
       } else if (data.session_state > 1) {
         setErrorMsg("The session is already completed and you cannot edit values.");
@@ -95,39 +93,13 @@ function ParticipantForm({
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-white text-lg mb-2">RA Name:</label>
+            <div className="col-span-2">
+              <label className="block text-white text-lg mb-2">Email:</label>
               <input
                 autoComplete="off"
-                type="text"
-                value={formData.raName}
-                onChange={(e) => onChange("raName", e.target.value)}
-                className="w-full p-3 text-white bg-gray-800 border border-white rounded-lg focus:outline-none focus:border-blue-400"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-white text-lg mb-2">
-                Session Date:
-              </label>
-              <input
-                autoComplete="off"
-                type="text"
-                value={formData.sessionDate}
-                onChange={(e) => onChange("sessionDate", e.target.value)}
-                className="w-full p-3 text-white bg-gray-800 border border-white rounded-lg focus:outline-none focus:border-blue-400"
-              />
-            </div>
-            <div>
-              <label className="block text-white text-lg mb-2">
-                Session Time:
-              </label>
-              <input
-                autoComplete="off"
-                type="text"
-                value={formData.sessionTime}
-                onChange={(e) => onChange("sessionTime", e.target.value)}
+                type="email"
+                value={formData.email}
+                onChange={(e) => onChange("email", e.target.value)}
                 className="w-full p-3 text-white bg-gray-800 border border-white rounded-lg focus:outline-none focus:border-blue-400"
               />
             </div>

@@ -33,6 +33,47 @@ export default function AdminView() {
   const [newTime, setNewTime] = useState("");
   const [manageLoading, setManageLoading] = useState(false);
 
+  // Create User State
+  const [createUserForm, setCreateUserForm] = useState({
+    participant_id: "",
+    full_name: "",
+    session_date: "",
+    session_time: "",
+    email: ""
+  });
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [createUserMessage, setCreateUserMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateUserLoading(true);
+    setCreateUserMessage(null);
+    try {
+      const res = await fetch('/api/admin/create_user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createUserForm)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCreateUserMessage({ text: "Participant created successfully!", type: 'success' });
+        setCreateUserForm({
+          participant_id: "",
+          full_name: "",
+          session_date: "",
+          session_time: "",
+          email: ""
+        });
+      } else {
+        setCreateUserMessage({ text: data.error || "Failed to create participant", type: 'error' });
+      }
+    } catch (err: any) {
+      setCreateUserMessage({ text: err.message || "Failed to create participant", type: 'error' });
+    } finally {
+      setCreateUserLoading(false);
+    }
+  };
+
   // Fetch available times on load
   const fetchTimes = async () => {
     try {
@@ -293,6 +334,91 @@ export default function AdminView() {
           ) : (
             <div className="text-gray-400 italic">No participants found for this time.</div>
           )}
+        </div>
+
+        <div className="mt-8 border border-gray-700 bg-gray-800 rounded-xl p-8 shadow-2xl">
+          <h2 className="text-2xl font-semibold text-white mb-6">Create New Participant</h2>
+          <form onSubmit={handleCreateUser} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-400 mb-1">Participant ID</label>
+                <input
+                  type="text"
+                  required
+                  value={createUserForm.participant_id}
+                  onChange={(e) => setCreateUserForm({ ...createUserForm, participant_id: e.target.value })}
+                  className="w-full p-3 bg-gray-900 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-white transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-400 mb-1">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={createUserForm.full_name}
+                  onChange={(e) => setCreateUserForm({ ...createUserForm, full_name: e.target.value })}
+                  className="w-full p-3 bg-gray-900 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-white transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-400 mb-1">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={createUserForm.email}
+                  onChange={(e) => setCreateUserForm({ ...createUserForm, email: e.target.value })}
+                  className="w-full p-3 bg-gray-900 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-white transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-400 mb-1">Session State</label>
+                <input
+                  type="text"
+                  disabled
+                  value="0"
+                  className="w-full p-3 bg-gray-700 text-gray-400 rounded-lg border border-gray-600 cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-400 mb-1">Session Date</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Wednesday, March 5th"
+                  value={createUserForm.session_date}
+                  onChange={(e) => setCreateUserForm({ ...createUserForm, session_date: e.target.value })}
+                  className="w-full p-3 bg-gray-900 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-white transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-400 mb-1">Session Time</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 2:00 PM - 4:30 PM"
+                  value={createUserForm.session_time}
+                  onChange={(e) => setCreateUserForm({ ...createUserForm, session_time: e.target.value })}
+                  className="w-full p-3 bg-gray-900 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-white transition-colors"
+                />
+              </div>
+            </div>
+            
+            {createUserMessage && (
+              <div className={`p-4 rounded-lg font-medium ${createUserMessage.type === 'success' ? 'bg-green-900 text-green-300 border border-green-700' : 'bg-red-900 text-red-300 border border-red-700'}`}>
+                {createUserMessage.text}
+              </div>
+            )}
+            
+            <button
+              type="submit"
+              disabled={createUserLoading}
+              className={`w-full px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-lg mt-4 ${
+                createUserLoading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {createUserLoading ? "Creating..." : "Create User"}
+            </button>
+          </form>
         </div>
 
         <div className="mt-8 border border-gray-700 bg-gray-800 rounded-xl p-8 shadow-2xl mb-16">

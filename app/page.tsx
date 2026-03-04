@@ -10,9 +10,7 @@ export default function Home() {
   const [formData, setFormData] = useState({
     participantId: "",
     fullName: "",
-    raName: "",
-    sessionTime: "",
-    sessionDate: "",
+    email: "",
   });
 
   const handleFormChange = (field: string, value: string) => {

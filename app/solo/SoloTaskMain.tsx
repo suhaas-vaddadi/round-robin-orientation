@@ -323,6 +323,10 @@ function ClassificationTaskMain({
 
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentStep, instructionIndex, currentPersonIndex, showTransition]);
+
+  useEffect(() => {
     const handleKeyPress = async (_event: KeyboardEvent) => {
       // disable keypress actions if submitting
       if (isSubmitting) return;
