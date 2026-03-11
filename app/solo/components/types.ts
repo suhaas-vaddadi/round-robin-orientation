@@ -11,70 +11,62 @@ export const EMOTIONS = [
     "Sadness",
     "Sympathy",
     "Happiness",
-    "Anxiety"
+    "Anxiety",
+    "Boredom",
+    "Interest",
+    "Relief"
 ] as const;
 
 export type Emotion = typeof EMOTIONS[number];
 
+export const EMOTION_GROUPS = [
+    ["Anger", "Sadness", "Happiness"],
+    ["Guilt", "Sympathy", "Anxiety"],
+    ["Boredom", "Interest", "Relief"]
+] as const;
+
+export interface EmotionalScenerioType {
+    text: string;
+    groupIndex: number; // 0, 1, or 2 for EMOTION_GROUPS
+}
+
 export interface AnsweredEmotionalScenerio {
-    scenerio: string;
+    scenerio: EmotionalScenerioType;
     ratings: Record<string, number>;
     questionIndex: number;
 }
 
+export const yourselfEmotionalScenerios: EmotionalScenerioType[] = [
+    { text: "You have been betrayed by a friend.", groupIndex: 0 },
+    { text: "Someone else is to blame for the bad situation you are in.", groupIndex: 0 },
+    { text: "Something important to you has been destroyed.", groupIndex: 0 },
+    { text: "Someone is trying to take advantage of you.", groupIndex: 0 },
+    { text: "You have experienced the loss of a friendship.", groupIndex: 0 },
+    { text: "You are being blamed for poor performance on an assignment.", groupIndex: 1 },
+    { text: "You have committed an act that has unintentionally had a negative impact on others.", groupIndex: 1 },
+    { text: "You are in an unfamiliar environment.", groupIndex: 1 },
+    { text: "You are unsure whether you are prepared for the situation you are in.", groupIndex: 1 },
+    { text: "Your hard word allows you to reach a goal.", groupIndex: 2 },
+    { text: "You confront a challenge which leads to a great outcome for you.", groupIndex: 2 },
+    { text: "Your presence in a group makes your peers engaged and excited.", groupIndex: 2 },
+    { text: "A new and very ambitious idea has been brought to your attention.", groupIndex: 2 }
 
-export const yourselfEmotionalScenerios: string[] = [
-    "You have been betrayed by a friend.",
-    "Someone else is to blame for the bad situation you are in.",
-    "Someone is interfering with my chance to succeed.",
-    "Someone is trying to take advantage of you.",
-    "You have committed an act that has unintentionally had a negative impact on others.",
-    "You are being blamed for poor performance on an assignment.",
-    "You are in an unknown environment.",
-    "You are unsure whether you can manage the situation you are in.",
-    "You experience a situation led to a great outcome for you.",
-    "You get what you want out of a situation.",
-    "Things go wonderfully well for you in a situation.",
-    "You have experienced a loss.",
-    "Something important to you has been destroyed.",
-    "Something important has caught the interest of you.",
-    "Something being discussed relates to concerns you have dealt with in the past.",
-    "Another person is in a difficult situation.",
-    "You see another person in trouble.",
-    "You witness another person in need of help.",
-    "You are in a situation that is totally unimportant.",
-    "A discussion is occurring nearby that is none of your concern.",
-    "You are in a situation that is not likely to impact you.",
-    "You are in a situation that is a total waste of time.",
-    "A burden has been lifted from your mind.",
-    "You have managed to continue despite the challenges you have dealt with recently."
 ];
 
-export const averageUWEmotionalScenerios: string[] = [
-    "They have been betrayed by a friend.",
-    "Someone else is to blame for the bad situation they are in.",
-    "Someone is interfering with their chance to succeed.",
-    "Someone is trying to take advantage of them.",
-    "They have committed an act that has unintentionally had a negative impact on others.",
-    "They are being blamed for poor performance on an assignment.",
-    "They are in an unknown environment.",
-    "They are unsure whether they can manage the situation they are in.",
-    "They experience a situation led to a great outcome for them.",
-    "They get what they want out of a situation.",
-    "Things go wonderfully well for them in a situation.",
-    "They have experienced a loss.",
-    "Something important to them has been destroyed.",
-    "Something important has caught the interest of them.",
-    "Something being discussed relates to concerns they have dealt with in the past.",
-    "Another person is in a difficult situation.",
-    "They see another person in trouble.",
-    "They witness another person in need of help.",
-    "They are in a situation that is totally unimportant.",
-    "A discussion is occurring nearby that is none of their concern.",
-    "They are in a situation that is not likely to impact them.",
-    "They are in a situation that is a total waste of time.",
-    "A burden has been lifted from their mind.",
-    "They have managed to continue despite the challenges they have dealt with recently."
+export const averageUWEmotionalScenerios: EmotionalScenerioType[] = [
+    { text: "They have been betrayed by a friend.", groupIndex: 0 },
+    { text: "Someone else is to blame for the bad situation they are in.", groupIndex: 0 },
+    { text: "Something important to them has been destroyed.", groupIndex: 0 },
+    { text: "Someone is trying to take advantage of them.", groupIndex: 0 },
+    { text: "They have experienced the loss of a friendship.", groupIndex: 0 },
+    { text: "They are being blamed for poor performance on an assignment.", groupIndex: 1 },
+    { text: "They have committed an act that has unintentionally had a negative impact on others.", groupIndex: 1 },
+    { text: "They are in an unfamiliar environment.", groupIndex: 1 },
+    { text: "They are unsure whether they are prepared for the situation they are in.", groupIndex: 1 },
+    { text: "Their hard word allows them to reach a goal.", groupIndex: 2 },
+    { text: "They confront a challenge which leads to a great outcome for them.", groupIndex: 2 },
+    { text: "Their presence in a group makes their peers engaged and excited.", groupIndex: 2 },
+    { text: "A new and very ambitious idea has been brought to their attention.", groupIndex: 2 }
 ];
 
 

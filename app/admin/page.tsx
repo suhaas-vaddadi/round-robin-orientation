@@ -44,8 +44,8 @@ export default function AdminView() {
   const [createUserLoading, setCreateUserLoading] = useState(false);
   const [createUserMessage, setCreateUserMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateUser = async (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
     setCreateUserLoading(true);
     setCreateUserMessage(null);
     try {
@@ -93,8 +93,8 @@ export default function AdminView() {
     fetchTimes();
   }, []);
 
-  const handleCheck = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCheck = async (e?: React.SyntheticEvent) => {
+    if (e) e.preventDefault();
     if (!participantId.trim()) return;
 
     setLoading(true);
@@ -185,18 +185,20 @@ export default function AdminView() {
       <div className="w-full max-w-2xl">
         <h1 className="text-3xl font-bold text-white mb-8 text-center">Admin Dashboard</h1>
 
-        <form onSubmit={handleCheck} className="flex flex-col space-y-4 mb-8 border-b border-gray-700 pb-8">
+        <div className="flex flex-col space-y-4 mb-8 border-b border-gray-700 pb-8">
           <label className="text-white text-lg font-medium">Check Participant Progress:</label>
           <div className="flex space-x-4">
             <input
               type="text"
               value={participantId}
               onChange={(e) => setParticipantId(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCheck(e); }}
               placeholder="e.g., P001"
               className="flex-1 p-3 bg-gray-800 text-white rounded-lg border border-gray-600 focus:outline-none focus:border-white transition-colors"
             />
             <button
-              type="submit"
+              type="button"
+              onClick={handleCheck}
               disabled={loading}
               className={`px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-colors ${
                 loading ? "opacity-50 cursor-not-allowed" : ""
@@ -206,74 +208,89 @@ export default function AdminView() {
             </button>
           </div>
           {error && <p className="text-red-500 mt-2">{error}</p>}
-        </form>
+        </div>
 
         {status && (
           <div className="border border-gray-700 bg-gray-800 rounded-xl p-8 shadow-2xl">
-            <h2 className="text-2xl font-semibold text-white mb-6">
-              Completion Status for <span className="text-blue-400">{participantId}</span>
-            </h2>
-
-            {status.sessionState !== null && (
-              <div className="mb-6 p-4 bg-gray-900 rounded-lg border border-gray-700 flex items-center justify-between">
-                <div>
-                  <span className="text-gray-400 font-medium">Current Phase: </span>
-                  <span className="text-xl font-bold text-white ml-2">{status.sessionState === 0 ? "Scheduler" : status.sessionState === 1 ? "Orientation" : status.sessionState === 2 ? "Conversation" : "Completed"}</span>
+            {status.sessionState === null ? (
+              <div className="text-center py-6">
+                <div className="text-red-500 mb-2">
+                  <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <label className="text-sm text-gray-400">Change to:</label>
-                  <select
-                    className="p-2 bg-gray-800 text-white rounded border border-gray-600 focus:outline-none"
-                    value={status.sessionState}
-                    onChange={async (e) => {
-                       const newState = parseInt(e.target.value);
-                       try {
-                         const res = await fetch('/api/admin/check_completion', {
-                           method: 'PUT',
-                           headers: { 'Content-Type': 'application/json' },
-                           body: JSON.stringify({ participant_id: participantId, session_state: newState })
-                         });
-                         if (res.ok) {
-                           // reload status visually
-                           setStatus({ ...status, sessionState: newState });
-                         } else {
-                            alert("Failed to update session state");
+                <h3 className="text-xl font-medium text-white mb-2">Participant ID Not Found</h3>
+                <p className="text-gray-400">
+                  The ID <span className="text-blue-400 font-semibold">{participantId}</span> does not exist in the system.
+                  Please ensure it was typed correctly or register them using the form below.
+                </p>
+              </div>
+            ) : (
+              <>
+                <h2 className="text-2xl font-semibold text-white mb-6">
+                  Completion Status for <span className="text-blue-400">{participantId}</span>
+                </h2>
+
+                <div className="mb-6 p-4 bg-gray-900 rounded-lg border border-gray-700 flex items-center justify-between">
+                  <div>
+                    <span className="text-gray-400 font-medium">Current Phase: </span>
+                    <span className="text-xl font-bold text-white ml-2">{status.sessionState === 0 ? "Scheduler" : status.sessionState === 1 ? "Orientation" : status.sessionState === 2 ? "Conversation" : "Completed"}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm text-gray-400">Change to:</label>
+                    <select
+                      className="p-2 bg-gray-800 text-white rounded border border-gray-600 focus:outline-none"
+                      value={status.sessionState}
+                      onChange={async (e) => {
+                         const newState = parseInt(e.target.value);
+                         try {
+                           const res = await fetch('/api/admin/check_completion', {
+                             method: 'PUT',
+                             headers: { 'Content-Type': 'application/json' },
+                             body: JSON.stringify({ participant_id: participantId, session_state: newState })
+                           });
+                           if (res.ok) {
+                             // reload status visually
+                             setStatus({ ...status, sessionState: newState });
+                           } else {
+                              alert("Failed to update session state");
+                           }
+                         } catch (err) {
+                            alert("Failed to change state");
                          }
-                       } catch (err) {
-                          alert("Failed to change state");
-                       }
-                    }}
-                  >
-                    <option value={0}>Scheduler</option>
-                    <option value={1}>Orientation</option>
-                    <option value={2}>Conversation</option>
-                    <option value={3}>Completed</option>
-                  </select>
+                      }}
+                    >
+                      <option value={0}>Scheduler</option>
+                      <option value={1}>Orientation</option>
+                      <option value={2}>Conversation</option>
+                      <option value={3}>Completed</option>
+                    </select>
+                  </div>
                 </div>
-              </div>
+
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-xl font-medium text-white mb-4 border-b border-gray-700 pb-2">Scheduler</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <ChecklistItem label="Demographics" isCompleted={status.demographics} />
+                      <ChecklistItem label="Availability" isCompleted={status.availability} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="text-xl font-medium text-white mb-4 border-b border-gray-700 pb-2">Orientation</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <ChecklistItem label="Emotion Scenario" isCompleted={status.emotionScenerio} />
+                      <ChecklistItem label="Self Frequency" isCompleted={status.selfFrequency} />
+                      <ChecklistItem label="Loneliness" isCompleted={status.loneliness} />
+                      <ChecklistItem label="Social Connectedness" isCompleted={status.socialConnectedness} />
+                      <ChecklistItem label="Expressivity" isCompleted={status.expressivity} />
+                      <ChecklistItem label="Autism" isCompleted={status.autism} />
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
-
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-medium text-white mb-4 border-b border-gray-700 pb-2">Scheduler</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <ChecklistItem label="Demographics" isCompleted={status.demographics} />
-                  <ChecklistItem label="Availability" isCompleted={status.availability} />
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-medium text-white mb-4 border-b border-gray-700 pb-2">Orientation</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <ChecklistItem label="Emotion Scenario" isCompleted={status.emotionScenerio} />
-                  <ChecklistItem label="Self Frequency" isCompleted={status.selfFrequency} />
-                  <ChecklistItem label="Loneliness" isCompleted={status.loneliness} />
-                  <ChecklistItem label="Social Connectedness" isCompleted={status.socialConnectedness} />
-                  <ChecklistItem label="Expressivity" isCompleted={status.expressivity} />
-                  <ChecklistItem label="Autism" isCompleted={status.autism} />
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
@@ -338,7 +355,7 @@ export default function AdminView() {
 
         <div className="mt-8 border border-gray-700 bg-gray-800 rounded-xl p-8 shadow-2xl">
           <h2 className="text-2xl font-semibold text-white mb-6">Create New Participant</h2>
-          <form onSubmit={handleCreateUser} className="space-y-4">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-400 mb-1">Participant ID</label>
@@ -410,7 +427,8 @@ export default function AdminView() {
             )}
             
             <button
-              type="submit"
+              type="button"
+              onClick={handleCreateUser}
               disabled={createUserLoading}
               className={`w-full px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-lg mt-4 ${
                 createUserLoading ? "opacity-50 cursor-not-allowed" : ""
@@ -418,7 +436,7 @@ export default function AdminView() {
             >
               {createUserLoading ? "Creating..." : "Create User"}
             </button>
-          </form>
+          </div>
         </div>
 
         <div className="mt-8 border border-gray-700 bg-gray-800 rounded-xl p-8 shadow-2xl mb-16">

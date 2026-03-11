@@ -31,11 +31,14 @@ export async function POST(request: Request) {
             rating.sympathy,
             rating.happiness,
             rating.anxiety,
+            rating.boredom,
+            rating.interest,
+            rating.relief,
             rating.questionIndex
         ]);
 
         const [result] = await conn.query(
-            `INSERT INTO RoundRobinStudy.EmotionScenerio (participant_id, scenerio, ratingPerson, Anger, Guilt, Sadness, Sympathy, Happiness, Anxiety, question_index) VALUES ?;`,
+            `INSERT INTO RoundRobinStudy.EmotionScenerio (participant_id, scenerio, ratingPerson, Anger, Guilt, Sadness, Sympathy, Happiness, Anxiety, Boredom, Interest, Relief, question_index) VALUES ?;`,
             [values]
         );
         conn.release();

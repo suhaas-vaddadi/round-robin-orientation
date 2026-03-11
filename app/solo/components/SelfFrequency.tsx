@@ -13,15 +13,9 @@ export default function SelfFrequency({ onContinue, loading, initialData }: Clas
 
   const [shuffledEmotions] = useState(() => {
     const emotions = [
-      "Anger",
-      "Guilt",
-      "Anxiety/Fear",
-      "Happiness", 
-      "Sadness", 
-      "Interest",
-      "Sympathy",
-      "Boredom",
-      "Relief",
+      "Anger", "Sadness", "Happiness",
+      "Guilt", "Sympathy", "Anxiety",
+      "Boredom", "Interest", "Relief"
     ];
     return [...emotions].sort(() => Math.random() - 0.5);
   });

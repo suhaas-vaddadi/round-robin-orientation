@@ -372,7 +372,7 @@ function ClassificationTaskMain({
         setIsSubmitting(true);
         const payload = ratings.map((r) => ({
             ratingTask: "emotion_rating",
-            scenerio: r.scenerio,
+            scenerio: r.scenerio.text,
             ratingPerson: ratingPerson,
             anger: typeof r.ratings.Anger === 'number' ? r.ratings.Anger : null,
             guilt: typeof r.ratings.Guilt === 'number' ? r.ratings.Guilt : null,
@@ -380,6 +380,9 @@ function ClassificationTaskMain({
             sympathy: typeof r.ratings.Sympathy === 'number' ? r.ratings.Sympathy : null,
             happiness: typeof r.ratings.Happiness === 'number' ? r.ratings.Happiness : null,
             anxiety: typeof r.ratings.Anxiety === 'number' ? r.ratings.Anxiety : null,
+            boredom: typeof r.ratings.Boredom === 'number' ? r.ratings.Boredom : null,
+            interest: typeof r.ratings.Interest === 'number' ? r.ratings.Interest : null,
+            relief: typeof r.ratings.Relief === 'number' ? r.ratings.Relief : null,
             questionIndex: r.questionIndex
         }));
         await fetch(`/api/emotion_rating`, {
@@ -430,7 +433,7 @@ function ClassificationTaskMain({
               groupSize={3}
               instructions={[
                 "You will be presented with a set of scenarios.",
-                "Your task is to estimate the [likelihood/intensity] a person would feel the given emotion in each scenario.",
+                "Your task is to estimate the likelihood a person would feel the given emotion in each scenario.",
                 "You will give these estimates on a scale of 0 (not at all) to 100 (extremely)."
               ]}
             />

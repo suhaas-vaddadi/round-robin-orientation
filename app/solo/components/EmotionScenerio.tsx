@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import ConfirmationModal from "./ui/ConfirmationModal";
-import { AnsweredEmotionalScenerio, EMOTIONS } from "./types";
+import { AnsweredEmotionalScenerio, EMOTIONS, EMOTION_GROUPS, EmotionalScenerioType } from "./types";
 
 interface TransitionRatingProps {
   ratingPerson: string;
-  scenerios: string[];
+  scenerios: EmotionalScenerioType[];
   isLoading?: boolean;
   onTransitionSubmit?: (result: AnsweredEmotionalScenerio) => void;
   onAllTransitionsComplete?: (ratings: AnsweredEmotionalScenerio[]) => void;
@@ -33,7 +33,7 @@ export default function EmotionScenerio({
   const defaultRatings = EMOTIONS.reduce((acc, curr) => ({ ...acc, [curr]: 50 }), {} as Record<string, number>);
   const [ratings, setRatings] = useState<Record<string, number>>(defaultRatings);
   const [currentTransitionIndex, setCurrentTransitionIndex] = useState<number>(0);
-  const [shuffledTransitions] = useState<string[]>(() => shuffleArray(scenerios));
+  const [shuffledTransitions] = useState<EmotionalScenerioType[]>(() => shuffleArray(scenerios));
   const [completedRatings, setCompletedRatings] = useState<AnsweredEmotionalScenerio[]>([]);
   const [showDefaultConfirm, setShowDefaultConfirm] = useState<boolean>(false);
   const [hasInitialized, setHasInitialized] = useState<boolean>(false);
@@ -49,11 +49,13 @@ export default function EmotionScenerio({
       
       for (let i = 0; i < shuffledTransitions.length; i++) {
         const scenario = shuffledTransitions[i];
-        const scenarioData = initialData.filter((row: any) => row.scenerio === scenario && row.ratingPerson === ratingPerson);
+        const scenarioData = initialData.filter((row: any) => row.scenerio === scenario.text && row.ratingPerson === ratingPerson);
         if (scenarioData.length > 0) {
            const row = scenarioData[0];
            const parsedRatings: Record<string, number> = {};
-           EMOTIONS.forEach((emotion) => {
+           
+           const currentEmotions = EMOTION_GROUPS[scenario.groupIndex];
+           currentEmotions.forEach((emotion) => {
                if (row[emotion] !== undefined && row[emotion] !== null) {
                    parsedRatings[emotion] = Number(row[emotion]);
                }
@@ -81,10 +83,16 @@ export default function EmotionScenerio({
     }
   }, [initialData, hasInitialized, shuffledTransitions, ratingPerson]);
 
-  const submitScenerio = async(scenerio: string) => {
+  const submitScenerio = async(scenerio: EmotionalScenerioType) => {
+    const currentEmotions = EMOTION_GROUPS[scenerio.groupIndex];
+    const relevantRatings: Record<string, number> = {};
+    currentEmotions.forEach(e => {
+       relevantRatings[e] = ratings[e];
+    });
+
     const temp: AnsweredEmotionalScenerio = {
       scenerio: scenerio,
-      ratings: { ...ratings },
+      ratings: relevantRatings,
       questionIndex: currentTransitionIndex
     };
     const newCompleted = [...completedRatings, temp];
@@ -102,7 +110,10 @@ export default function EmotionScenerio({
   const handleContinue = () => {
     if (loading || isLoading) return;
     
-    const hasDefault = Object.values(ratings).some(r => r === 50);
+    const currentTransition = shuffledTransitions[currentTransitionIndex];
+    const currentEmotions = EMOTION_GROUPS[currentTransition.groupIndex];
+    const hasDefault = currentEmotions.some(e => ratings[e] === 50);
+    
     if (hasDefault) {
       setShowDefaultConfirm(true);
       return;
@@ -129,18 +140,18 @@ export default function EmotionScenerio({
     <div className="min-h-screen w-full flex flex-col items-center py-16 bg-black overflow-y-auto">
       <div className="w-full max-w-4xl mx-auto px-8">
         <p className="text-white text-2xl mb-12">
-         Given the situation, to what degree would {ratingPerson === "yourself" ? "you" : ratingPerson} feel each of these emotions?
+         Given the situation, what is the likelihood {ratingPerson === "yourself" ? "you" : "the average UW-Madison student"} will feel each of the following? 0 (not at all) to 100 (extremely)
         </p>
 
         <div>
           <div className="flex items-center mt-8 mb-16">
             <p className="text-white text-2xl">
-              {currentTransition}
+              {currentTransition.text}
             </p>
           </div>
 
           <div className="space-y-16 w-full mx-auto">
-            {EMOTIONS.map((emotion) => (
+            {EMOTION_GROUPS[currentTransition.groupIndex].map((emotion) => (
               <div key={emotion} className="w-full">
                 <p className="text-white w-full text-center text-xl  mb-2 mr-2">{emotion}</p>
                 <div
