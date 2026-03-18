@@ -46,7 +46,7 @@ export const yourselfEmotionalScenerios: EmotionalScenerioType[] = [
     { text: "You have committed an act that has unintentionally had a negative impact on others.", groupIndex: 1 },
     { text: "You are in an unfamiliar environment.", groupIndex: 1 },
     { text: "You are unsure whether you are prepared for the situation you are in.", groupIndex: 1 },
-    { text: "Your hard word allows you to reach a goal.", groupIndex: 2 },
+    { text: "Your hard work allows you to reach a goal.", groupIndex: 2 },
     { text: "You confront a challenge which leads to a great outcome for you.", groupIndex: 2 },
     { text: "Your presence in a group makes your peers engaged and excited.", groupIndex: 2 },
     { text: "A new and very ambitious idea has been brought to your attention.", groupIndex: 2 }

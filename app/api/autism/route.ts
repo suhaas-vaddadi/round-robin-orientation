@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from "next/server";
 import { poolPromise } from "@/lib/db";
 
 export async function POST(request: Request) {
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
         ]);
 
         const [result] = await conn.query(
-            `INSERT INTO RoundRobinStudy.Autism (participant_id, question, rating, question_index) VALUES ?;`,
+            `REPLACE INTO RoundRobinStudy.Autism (participant_id, question, rating, question_index) VALUES ?;`,
             [values]
         );
         conn.release();
@@ -60,4 +61,15 @@ export async function GET(request: Request) {
         console.error("Error fetching autism ratings:", error);
         return Response.json({ error: "Failed to fetch autism ratings" }, { status: 500 });
     }
+}
+
+export async function OPTIONS(_request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
 }

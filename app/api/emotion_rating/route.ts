@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from "next/server";
 import { poolPromise } from "@/lib/db";
 
 export async function POST(request: Request) {
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
         ]);
 
         const [result] = await conn.query(
-            `INSERT INTO RoundRobinStudy.EmotionScenerio (participant_id, scenerio, ratingPerson, Anger, Guilt, Sadness, Sympathy, Happiness, Anxiety, Boredom, Interest, Relief, question_index) VALUES ?;`,
+            `REPLACE INTO RoundRobinStudy.EmotionScenerio (participant_id, scenerio, ratingPerson, Anger, Guilt, Sadness, Sympathy, Happiness, Anxiety, Boredom, Interest, Relief, question_index) VALUES ?;`,
             [values]
         );
         conn.release();
@@ -72,4 +73,15 @@ export async function GET(request: Request) {
         console.error("Error fetching emotion ratings:", error);
         return Response.json({ error: "Failed to fetch emotion ratings" }, { status: 500 });
     }
+}
+
+export async function OPTIONS(_request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
 }

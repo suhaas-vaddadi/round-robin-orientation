@@ -19,7 +19,7 @@ export default function SocialConnectedness({
   const originalRows = [
     "I feel disconnected from the world around me.",
     "My friends feel like family.",
-    "I don't feel I participate with anyone or any group.",
+    "I don't feel that I participate with anyone or any group.",
     "I feel distant from people.",
     "Even around people I know, I don't feel that I really belong.",
     "I find myself actively involved in people's lives.",

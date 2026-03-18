@@ -6,7 +6,6 @@ import SelfFrequency from "./components/SelfFrequency";
 import Loneliness from "./components/Loneliness";
 import SocialConnectedness from "./components/SocialConnectedness";
 import Expressivity from "./components/Expressivity";
-import Autism from "./components/Autism";
 import { yourselfEmotionalScenerios, averageUWEmotionalScenerios } from "./components/types";
 import { ClassificationTaskMainProps, StepData, SelfFrequencyData, MatrixData, AnsweredEmotionalScenerio } from "./components/types";
 
@@ -69,8 +68,7 @@ function ClassificationTaskMain({
     "selfFrequency",
     blockRandomized[0],
     blockRandomized[1],
-    blockRandomized[2],
-    "autism"
+    blockRandomized[2]
   ];
 
   useEffect(() => {
@@ -79,10 +77,9 @@ function ClassificationTaskMain({
         setIsFetchingInitialData(true);
         const participantId = _formData.participantId;
         
-        const [resEmotions, resLoneliness, resAutism, resSelfFrequency, resSocial, resExpressivity] = await Promise.all([
+        const [resEmotions, resLoneliness, resSelfFrequency, resSocial, resExpressivity] = await Promise.all([
           fetch(`/api/emotion_rating?participant_id=${participantId}`),
           fetch(`/api/loneliness?participant_id=${participantId}`),
-          fetch(`/api/autism?participant_id=${participantId}`),
           fetch(`/api/self_frequency?participant_id=${participantId}`),
           fetch(`/api/social_connectedness?participant_id=${participantId}`),
           fetch(`/api/expressivity?participant_id=${participantId}`)
@@ -98,7 +95,6 @@ function ClassificationTaskMain({
 
         const emotionsData = await parseData(resEmotions);
         const lonelinessData = await parseData(resLoneliness);
-        const autismData = await parseData(resAutism);
         const selfFrequencyData = await parseData(resSelfFrequency);
         const socialData = await parseData(resSocial);
         const expressivityData = await parseData(resExpressivity);
@@ -106,7 +102,6 @@ function ClassificationTaskMain({
         setInitialDataStore({
            emotions: emotionsData,
            loneliness: lonelinessData,
-           autism: autismData,
            selfFrequency: selfFrequencyData,
            socialConnectedness: socialData,
            expressivity: expressivityData
@@ -201,36 +196,7 @@ function ClassificationTaskMain({
           onComplete?.();
         }
         break;
-      case "autism":
-        const autismData = stepData as MatrixData;
-        if (autismData && autismData.order && autismData.matrixSelections) {
-          try {
-             setIsSubmitting(true);
-             const payload = autismData.order.map((question, index) => ({
-                question: question,
-                rating: typeof autismData.matrixSelections?.[index] === 'number' ? autismData.matrixSelections[index] : null,
-                index: index
-             }));
-             await fetch(`/api/autism`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    participant_id: _formData.participantId,
-                    ratings: payload
-                })
-             });
-          } finally {
-             setIsSubmitting(false);
-          }
-        }
-        if (currentFormIndex < formOrder.length - 1) {
-          setCurrentFormIndex(currentFormIndex + 1);
-          setCurrentStep(formOrder[currentFormIndex + 1]);
-        } else {
-          setCurrentStep("completed");
-          onComplete?.();
-        }
-        break;
+
       case "socialConnectedness":
         const socialData = stepData as MatrixData;
         if (socialData && socialData.order && socialData.matrixSelections) {
@@ -511,13 +477,7 @@ function ClassificationTaskMain({
           />
         )}
 
-        {currentStep === "autism" && (
-          <Autism 
-             onContinue={(data) => handleStepComplete(data as StepData)} 
-             loading={isSubmitting}
-             initialData={initialDataStore.autism || []}
-          />
-        )}
+
 
       </div>
     </div>

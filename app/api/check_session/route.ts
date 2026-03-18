@@ -1,3 +1,4 @@
+import { NextRequest, NextResponse } from "next/server";
 import { poolPromise } from "@/lib/db";
 
 export async function GET(request: Request) {
@@ -31,4 +32,15 @@ export async function GET(request: Request) {
         console.error("Error fetching session state:", error);
         return Response.json({ error: "Failed to fetch session state" }, { status: 500 });
     }
+}
+
+export async function OPTIONS(_request: NextRequest) {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  });
 }
