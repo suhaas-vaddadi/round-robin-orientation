@@ -49,7 +49,13 @@ export const yourselfEmotionalScenerios: EmotionalScenerioType[] = [
     { text: "Your hard work allows you to reach a goal.", groupIndex: 2 },
     { text: "You confront a challenge which leads to a great outcome for you.", groupIndex: 2 },
     { text: "Your presence in a group makes your peers engaged and excited.", groupIndex: 2 },
-    { text: "A new and very ambitious idea has been brought to your attention.", groupIndex: 2 }
+    { text: "A new and very ambitious idea has been brought to your attention.", groupIndex: 2 },
+    { text: "Something being discussed relates to concerns you have dealt with in the past.", groupIndex: 2 },
+    { text: "A discussion is occuring nearby that is none of your concern.", groupIndex: 2 },
+    { text: "You are in a situation that is not likely to impact you.", groupIndex: 2 },
+    { text: "You are asked to work on a task that has no direct connection to your personal goals.", groupIndex: 2 },
+    { text: "You have completed a task that has been burdening you.", groupIndex: 2 },
+    { text: "Your peers feel that your work has made a helpful contribution to your group.", groupIndex: 2 }
 
 ];
 
@@ -66,7 +72,13 @@ export const averageUWEmotionalScenerios: EmotionalScenerioType[] = [
     { text: "Their hard word allows them to reach a goal.", groupIndex: 2 },
     { text: "They confront a challenge which leads to a great outcome for them.", groupIndex: 2 },
     { text: "Their presence in a group makes their peers engaged and excited.", groupIndex: 2 },
-    { text: "A new and very ambitious idea has been brought to their attention.", groupIndex: 2 }
+    { text: "A new and very ambitious idea has been brought to their attention.", groupIndex: 2 },
+    { text: "Something being discussed relates to concerns they have dealt with in the past.", groupIndex: 2 },
+    { text: "A discussion is occuring nearby that is none of their concern.", groupIndex: 2 },
+    { text: "They are in a situation that is not likely to impact them.", groupIndex: 2 },
+    { text: "They are asked to work on a task that has no direct connection to their personal goals.", groupIndex: 2 },
+    { text: "They have completed a task that has been burdening them.", groupIndex: 2 },
+    { text: "Their peers feel that their work has made a helpful contribution to their group.", groupIndex: 2 }
 ];
 
 
